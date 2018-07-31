@@ -77,6 +77,13 @@ I can write some value: <code>{$value}</code> if it's passed to cms::theme()->sh
 Also I can display values from configuration: {[config_name]}.
 And some widgets {{controller_name}} from the application controllers.
 
+
+Alexandria Framework can freely work from the subdirectory while keeping all realativeness transparent, so you can generate project-related absolute links here:
+<a href="{root}/path/to/some/thing">I'm a link</a>
+
+Also you can use theme-related links:
+<link rel="stylesheet" href="{theme}/css/style.css">
+
 ```
 
 Good luck!
