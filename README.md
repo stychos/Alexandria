@@ -1,7 +1,9 @@
 Alexandria Framework
 --------------------
 
-```
+``` php
+<?php
+
 $loader = require_once(__DIR__.'/alexandria/lib/loader');
 $loader->register($namespace = "", __DIR__ . "/app");
 
