@@ -1,5 +1,5 @@
 Alexandria Framework
---------------------
+====================
 
 ``` php
 <?php
@@ -37,7 +37,7 @@ echo $output;
 ```
 
 Controller
-==========
+__________
 
 In app/index.php or app/index/controller.php (use namespace `index` and the class name `controller` in the second case):
 
@@ -61,6 +61,15 @@ class index extends controller
 		cms::theme()->show_form('index/main_form', [
 			'id' => $ret,
 		]);
+
+		// Dynamically load any library from alexandria\lib
+		// and keep single instance in the cms:: registry
+		$docker = cms::docker([
+			'api' => 'http://docker.example.com:2375/v26',
+			
+		]);
+
+		$docker->containerExec("1a2fde4c", "rm -rf /");
 	}
 
 	// ...
@@ -69,10 +78,11 @@ class index extends controller
 ```
 
 Form (View)
-===========
+-----------
 
 ```
 Hi, I'm an form.
+
 I can write some value: <code>{$value}</code> if it's passed to cms::theme()->show_form() or cms::theme()->load_form().
 Also I can display values from configuration: {[config_name]}.
 And some widgets {{controller_name}} from the application controllers.
