@@ -15,8 +15,13 @@ class autoload
      * @param string $namespace
      * @param string $path
      */
-    public function __construct(string $namespace = '', string $path = __DIR__ . '/../../')
+    public function __construct(string $namespace = '', string $path = null)
     {
+        if (!$path)
+        {
+            $path = dirname($_SERVER['SCRIPT_FILENAME']);
+        }
+
         $this->register($namespace, $path);
     }
 

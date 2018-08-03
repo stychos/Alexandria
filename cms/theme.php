@@ -36,7 +36,7 @@ class theme extends cms
         $sub   = preg_replace("#(/index\.php)?{$_SERVER['PATH_INFO']}#", '', $_SERVER['PHP_SELF']);
         $wroot .= !empty($sub) ? "{$sub}" : '';
 
-        $this->root  = $args->root ?? __DIR__ . '/../..';
+        $this->root  = $args->root ?? dirname($_SERVER['SCRIPT_FILENAME']);
         $this->wroot = $args->wroot ?? $wroot;
 
         $this->themes  = $args->themes ?? "{$this->root}/themes";

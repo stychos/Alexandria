@@ -173,7 +173,7 @@ class router
         }
     }
 
-    public function get_tail()
+    public function tail()
     {
         return $this->tail;
     }
