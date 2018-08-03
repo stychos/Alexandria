@@ -57,7 +57,7 @@ class smtp
         $this->pass   = $config['pass'] ?? null;
 
         // set localhost
-        $this->localhost = $config['localhost'];
+        $this->localhost = $config['localhost'] ?? '127.0.0.1';
 
         // set logger
         $this->logger = $logger;
