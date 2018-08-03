@@ -22,8 +22,9 @@ class login
 
         if (empty($_SESSION['__a_login_username']))
         {
-            $this->username_field           = cms::security()->gen_hash(16);
-            $this->password_field           = cms::security()->gen_hash(16);
+            $this->username_field = cms::security()->string(16);
+            $this->password_field = cms::security()->string(16);
+
             $_SESSION['__a_login_username'] = $this->username_field;
             $_SESSION['__a_login_password'] = $this->password_field;
         }
