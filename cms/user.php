@@ -29,7 +29,7 @@ class user
     protected $alias;
     protected $access;
     protected $password;
-    protected $data;
+    public $data;
 
     public function __construct($args = null)
     {
@@ -39,7 +39,7 @@ class user
             'alias'    => PROPERTY_STRING | PROPERTY_READWRITE,
             'access'   => PROPERTY_INT    | PROPERTY_READWRITE,
             'password' => PROPERTY_STRING | PROPERTY_READWRITE,
-            'data'     => PROPERTY_RAW    | PROPERTY_PRIVATE,
+            'data'     => PROPERTY_RAW    | PROPERTY_READWRITE,
         ];
 
         $this->__defaults([
@@ -179,6 +179,9 @@ class user
                     ':access'   => $this->access,
                     ':data'     => $data,
                 ]);
+
+            $id = cms::db()->id();
+            $this->id = $id;
         }
 
         else
