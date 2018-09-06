@@ -42,6 +42,7 @@ class user
             'data'     => PROPERTY_RAW    | PROPERTY_READWRITE,
         ];
 
+	$this->data = new \stdClass;
         $this->__defaults([
             'access' => self::access_banned,
         ]);
