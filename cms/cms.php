@@ -91,6 +91,7 @@ class cms
     protected static function load(string $module, array $args = [])
     {
         $try = [
+            $module,
             'alexandria\\cms\\' . $module,
             'alexandria\\lib\\' . $module,
         ];
