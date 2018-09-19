@@ -3,8 +3,7 @@
 namespace alexandria;
 
 // Pathinfo fix (on empty path nginx dont create this cgi variable)
-if (!isset($_SERVER['PATH_INFO']))
-{
+if (!isset($_SERVER['PATH_INFO'])) {
     $_SERVER['PATH_INFO'] = '';
 }
 
@@ -13,8 +12,6 @@ if (!isset($_SERVER['PATH_INFO']))
  *
  * @method cms\config config() static
  * @method cms\theme theme() static
- * @method cms\user user() static
- * @method cms\login login() static
  *
  * @method lib\autoload autoload() static
  * @method lib\db\ddi db() static
@@ -51,39 +48,32 @@ class cms
     {
         self::$config = $config;
 
-        if (!empty(self::$config['firewall']))
-        {
+        if (!empty(self::$config['firewall'])) {
             self::firewall(self::$config['firewall']);
         }
 
-        if (empty(self::$config['router']))
-        {
+        if (empty(self::$config['router'])) {
             return;
         }
 
-        if (!empty(self::$config['router']['path_rewrites']))
-        {
+        if (!empty(self::$config['router']['path_rewrites'])) {
             self::uri()->add_aliases(self::$config['router']['path_rewrites']);
         }
 
-        if (!stristr(PHP_SAPI, 'cli'))
-        {
+        if (!stristr(PHP_SAPI, 'cli')) {
             self::theme();
         }
 
-        if (empty(self::$config['router']['autoroute_path']))
-        {
+        if (empty(self::$config['router']['autoroute_path'])) {
             self::$config['router']['autoroute_path'] = self::uri()->all();
         }
 
         self::load('router', [self::$config['router']]);
-        if (!empty(self::$config['router']['autoroute']))
-        {
+        if (!empty(self::$config['router']['autoroute'])) {
             self::router()->autoroute();
         }
 
-        if (!stristr(PHP_SAPI, 'cli'))
-        {
+        if (!stristr(PHP_SAPI, 'cli')) {
             return self::theme()->render();
         }
     }
@@ -105,10 +95,8 @@ class cms
             'alexandria\\lib\\' . $module,
         ];
 
-        foreach ($try as $class)
-        {
-            if (class_exists($class))
-            {
+        foreach ($try as $class) {
+            if (class_exists($class)) {
                 $reflect              = new \ReflectionClass($class);
                 self::$cache[$module] = $reflect->newInstanceArgs($args);
                 return self::$cache[$module];
@@ -120,8 +108,7 @@ class cms
 
     public static function registry(string $module, array $args = [])
     {
-        if (empty($args) && !empty(self::$config[$module]))
-        {
+        if (empty($args) && !empty(self::$config[$module])) {
             $args = [self::$config[$module]];
         }
 

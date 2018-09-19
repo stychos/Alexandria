@@ -6,7 +6,6 @@ class response
 {
     public function __construct()
     {
-
     }
 
     public function set_header(string $header, string $value)
@@ -18,8 +17,7 @@ class response
 
     public function write(string $message): string
     {
-        if(stripos('CLI', PHP_SAPI) !== false)
-        {
+        if (stripos('CLI', PHP_SAPI) !== false) {
             $message = preg_replace('#<br\s*/?>#', "\n", $message);
             $message = strip_tags($message);
         }
@@ -30,7 +28,7 @@ class response
     public function write_json($object = null, $pretty = true): string
     {
         $out = json_encode($object, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-        if($out === false) {
+        if ($out === false) {
             throw new \exception("Can not encode output: ".json_last_error_msg());
         }
 

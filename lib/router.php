@@ -35,18 +35,15 @@ class router
     public function route(string $route): bool
     {
         $original_route = $route;
-        foreach ($this->rewrites as $from => $to)
-        {
+        foreach ($this->rewrites as $from => $to) {
             $route = str_replace($from, $to, $route);
         }
 
-        foreach ((array) $this->search_controllers as $class)
-        {
+        foreach ((array) $this->search_controllers as $class) {
             $controller = str_replace('{$route}', $route, $class);
             $controller = str_replace('/', '\\', $controller);
 
-            if (class_exists($controller) && method_exists($controller, '__construct'))
-            {
+            if (class_exists($controller) && method_exists($controller, '__construct')) {
                 $this->active_route = $route;
                 $this->tail         = str_replace($original_route, '', $this->autoroute_path);
                 $this->tail         = trim(rtrim($this->tail, '/'), '/');
@@ -72,48 +69,38 @@ class router
 
         // main routing cycle, walking up by query path
         $routed = false;
-        if (!empty($this->autoroute_path))
-        {
+        if (!empty($this->autoroute_path)) {
             $path = explode('/', $this->autoroute_path);
 
-            do
-            {
+            do {
                 $sub = implode('/', $path);
-                if ($this->route($sub))
-                {
+                if ($this->route($sub)) {
                     $routed = true;
 
                     // check if called controller has set router to continue auto-routing
-                    if ($this->continue)
-                    {
+                    if ($this->continue) {
                         $routed = false;
                         $this->continue = false;
-                    }
-                    else
-                    {
+                    } else {
                         break;
                     }
                 }
 
                 array_pop($path);
-            }
-            while (!empty($path));
+            } while (!empty($path));
         }
 
-        if (!$use_fallback)
-        {
+        if (!$use_fallback) {
             return $routed;
         }
 
         // try default route if no automatic route was found and if path is empty
-        if (!$routed && empty($this->autoroute_path))
-        {
+        if (!$routed && empty($this->autoroute_path)) {
             $routed = $this->route($this->default_route);
         }
 
         // try fail route if no automatic nor default routes are found
-        if (!$routed)
-        {
+        if (!$routed) {
             $routed = $this->route($this->fail_route);
         }
 
@@ -121,10 +108,8 @@ class router
         $this->postroute();
 
         // if we still not routed, then it's a fatal
-        if (!$routed)
-        {
-            if (stripos('CLI', PHP_SAPI) === false)
-            {
+        if (!$routed) {
+            if (stripos('CLI', PHP_SAPI) === false) {
                 http_response_code(404);
             }
 
@@ -145,8 +130,7 @@ class router
         $this->autoroute_path = $to;
         $this->autoroute($use_fallbacks = false);
 
-        if ($uri)
-        {
+        if ($uri) {
             $new_uri = rtrim($to, '/') . '/' . $this->tail;
             $uri->build($new_uri);
         }
@@ -159,16 +143,14 @@ class router
 
     protected function preroute()
     {
-        foreach ($this->pre_routes as $route)
-        {
+        foreach ($this->pre_routes as $route) {
             $this->route($route);
         }
     }
 
     protected function postroute()
     {
-        foreach ($this->post_routes as $route)
-        {
+        foreach ($this->post_routes as $route) {
             $this->route($route);
         }
     }

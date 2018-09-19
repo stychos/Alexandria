@@ -151,20 +151,14 @@ class smtp
     public function send()
     {
         // connect to server
-        if ($this->smtp_connect())
-        {
+        if ($this->smtp_connect()) {
             // deliver the email
-            if ($this->smtp_deliver())
-            {
+            if ($this->smtp_deliver()) {
                 $result = true;
-            }
-            else
-            {
+            } else {
                 $result = false;
             }
-        }
-        else
-        {
+        } else {
             $result = false;
         }
 
@@ -178,8 +172,7 @@ class smtp
     protected function smtp_connect()
     {
         // modify url, if needed
-        if ($this->secure === 'ssl')
-        {
+        if ($this->secure === 'ssl') {
             $this->host = 'ssl://' . $this->host;
         }
 
@@ -192,8 +185,7 @@ class smtp
         $this->connection = fsockopen($this->host, $this->port, $errno, $errstr, $this->timeout);
 
         // response
-        if ($this->code() !== 220)
-        {
+        if ($this->code() !== 220) {
             return false;
         }
 
@@ -204,14 +196,12 @@ class smtp
         $this->response();
 
         // if tls required...
-        if ($this->secure === 'tls')
-        {
+        if ($this->secure === 'tls') {
             // request
             $this->request('STARTTLS' . $this->newline);
 
             // response
-            if ($this->code() !== 220)
-            {
+            if ($this->code() !== 220) {
                 return false;
             }
 
@@ -222,21 +212,18 @@ class smtp
             $this->request(($this->auth ? 'EHLO' : 'HELO') . ' ' . $this->localhost . $this->newline);
 
             // response
-            if ($this->code() !== 250)
-            {
+            if ($this->code() !== 250) {
                 return false;
             }
         }
 
         // if auth required...
-        if ($this->auth)
-        {
+        if ($this->auth) {
             // request
             $this->request('AUTH LOGIN' . $this->newline);
 
             // response
-            if ($this->code() !== 334)
-            {
+            if ($this->code() !== 334) {
                 return false;
             }
 
@@ -244,8 +231,7 @@ class smtp
             $this->request(base64_encode($this->user) . $this->newline);
 
             // response
-            if ($this->code() !== 334)
-            {
+            if ($this->code() !== 334) {
                 return false;
             }
 
@@ -253,8 +239,7 @@ class smtp
             $this->request(base64_encode($this->pass) . $this->newline);
 
             // response
-            if ($this->code() !== 235)
-            {
+            if ($this->code() !== 235) {
                 return false;
             }
         }
@@ -275,37 +260,34 @@ class smtp
         $headers[] = 'Date: ' . date('r');
 
         // add to receipients
-        if (!empty($this->to))
-        {
+        if (!empty($this->to)) {
             $string = '';
-            foreach ($this->to as $r) $string .= $this->format($r) . ', ';
+            foreach ($this->to as $r) {
+                $string .= $this->format($r) . ', ';
+            }
             $string    = substr($string, 0, -2);
             $headers[] = 'To: ' . $string;
         }
 
         // add cc recipients
-        if (!empty($this->cc))
-        {
+        if (!empty($this->cc)) {
             $string = '';
-            foreach ($this->cc as $r) $string .= $this->format($r) . ', ';
+            foreach ($this->cc as $r) {
+                $string .= $this->format($r) . ', ';
+            }
             $string    = substr($string, 0, -2);
             $headers[] = 'CC: ' . $string;
         }
 
         // build email contents
-        if (empty($this->attachments))
-        {
-            if ($this->text_mode)
-            {
+        if (empty($this->attachments)) {
+            if ($this->text_mode) {
                 // add text
                 $headers[] = 'Content-Type: text/plain; charset="' . $this->charset . '"';
                 $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
                 $headers[] = '';
                 $headers[] = $this->text;
-            }
-
-            else
-            {
+            } else {
                 // add multipart
                 $headers[] = 'MIME-Version: 1.0';
                 $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
@@ -327,10 +309,7 @@ class smtp
                 $headers[] = $this->body;
                 $headers[] = '--' . $boundary . '--';
             }
-        }
-
-        else
-        {
+        } else {
             // add multipart
             $headers[] = 'MIME-Version: 1.0';
             $headers[] = 'Content-Type: multipart/mixed; boundary="' . $boundary . '"';
@@ -345,8 +324,7 @@ class smtp
             $headers[] = $this->text;
             $headers[] = '--' . $boundary;
 
-            if (!$this->text_mode)
-            {
+            if (!$this->text_mode) {
                 // add html
                 $headers[] = 'Content-Type: text/html; charset="' . $this->charset . '"';
                 $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
@@ -356,17 +334,14 @@ class smtp
             }
 
             // spin thru attachments...
-            foreach ($this->attachments as $path)
-            {
+            foreach ($this->attachments as $path) {
                 // if file exists...
-                if (file_exists($path))
-                {
+                if (file_exists($path)) {
                     // open file
                     $contents = @file_get_contents($path);
 
                     // if accessible...
-                    if ($contents)
-                    {
+                    if ($contents) {
                         // encode file contents
                         $contents = chunk_split(base64_encode($contents));
 
@@ -391,8 +366,7 @@ class smtp
 
         // build headers string
         $email = '';
-        foreach ($headers as $header)
-        {
+        foreach ($headers as $header) {
             $email .= $header . $this->newline;
         }
 
@@ -410,8 +384,7 @@ class smtp
 
         // spin recipients...
         $recipients = array_merge($this->to, $this->cc, $this->bcc);
-        foreach ($recipients as $r)
-        {
+        foreach ($recipients as $r) {
             // request
             $this->request('RCPT TO: <' . $r['email'] . '>' . $this->newline);
 
@@ -453,8 +426,7 @@ class smtp
     protected function request($string)
     {
         // report
-        if ($this->logger)
-        {
+        if ($this->logger) {
             $this->logger->info("SMTP Request: {$string}");
         }
 
@@ -466,18 +438,15 @@ class smtp
     {
         // get response
         $response = '';
-        while ($str = fgets($this->connection, 4096))
-        {
+        while ($str = fgets($this->connection, 4096)) {
             $response .= $str;
-            if (substr($str, 3, 1) === ' ')
-            {
+            if (substr($str, 3, 1) === ' ') {
                 break;
             }
         }
 
         // report
-        if ($this->logger)
-        {
+        if ($this->logger) {
             $this->logger->info("SMTP Response: {$response}");
         }
 
@@ -488,12 +457,9 @@ class smtp
     protected function format($recipient)
     {
         // format "name <email>"
-        if ($recipient['name'])
-        {
+        if ($recipient['name']) {
             return $recipient['name'] . ' <' . $recipient['email'] . '>';
-        }
-        else
-        {
+        } else {
             return '<' . $recipient['email'] . '>';
         }
     }
@@ -504,10 +470,8 @@ class smtp
         $lines = str_replace("\r", "\n", $lines);
 
         $content = '';
-        foreach (explode("\n", $lines) as $line)
-        {
-            foreach (str_split($line, 998) as $result)
-            {
+        foreach (explode("\n", $lines) as $line) {
+            foreach (str_split($line, 998) as $result) {
                 $content .= $result . $this->newline;
             }
         }

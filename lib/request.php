@@ -13,14 +13,10 @@ class request
 
     public function __construct()
     {
-        if (stripos(PHP_SAPI, 'CLI') !== false)
-        {
+        if (stripos(PHP_SAPI, 'CLI') !== false) {
             $this->method = 'CLI';
             $this->data   = '';
-        }
-
-        else
-        {
+        } else {
             $this->method = strtoupper($_SERVER['REQUEST_METHOD']);
             $this->data   = $this->method === 'GET'
                 ? $_SERVER['QUERY_STRING']
@@ -42,8 +38,7 @@ class request
      */
     public function get_headers(): array
     {
-        if (empty($this->headers))
-        {
+        if (empty($this->headers)) {
             $this->headers = $this->parse_headers();
         }
 
@@ -60,8 +55,7 @@ class request
      */
     public function get_header(string $name)
     {
-        if (empty($this->headers))
-        {
+        if (empty($this->headers)) {
             $this->headers = $this->parse_headers();
         }
 
@@ -87,15 +81,42 @@ class request
     }
 
 
-    public function is_cli(): bool { return $this->method === 'CLI'; }
-    public function is_options(): bool { return $this->method === 'OPTIONS'; }
-    public function is_get(): bool { return $this->method === 'GET'; }
-    public function is_head(): bool { return $this->method === 'HEAD'; }
-    public function is_post(): bool { return $this->method === 'POST'; }
-    public function is_put(): bool { return $this->method === 'PUT'; }
-    public function is_delete(): bool { return $this->method === 'DELETE'; }
-    public function is_trace(): bool { return $this->method === 'TRACE'; }
-    public function is_connect(): bool { return $this->method === 'CONNECT'; }
+    public function is_cli(): bool
+    {
+        return $this->method === 'CLI';
+    }
+    public function is_options(): bool
+    {
+        return $this->method === 'OPTIONS';
+    }
+    public function is_get(): bool
+    {
+        return $this->method === 'GET';
+    }
+    public function is_head(): bool
+    {
+        return $this->method === 'HEAD';
+    }
+    public function is_post(): bool
+    {
+        return $this->method === 'POST';
+    }
+    public function is_put(): bool
+    {
+        return $this->method === 'PUT';
+    }
+    public function is_delete(): bool
+    {
+        return $this->method === 'DELETE';
+    }
+    public function is_trace(): bool
+    {
+        return $this->method === 'TRACE';
+    }
+    public function is_connect(): bool
+    {
+        return $this->method === 'CONNECT';
+    }
 
     /**
      * Call $callback if the request of $method HTTP method.
@@ -107,8 +128,7 @@ class request
      */
     public function on(string $method, callable $callback)
     {
-        if (strtoupper($method) == $this->method)
-        {
+        if (strtoupper($method) == $this->method) {
             return $callback($this->data);
         }
     }
@@ -128,13 +148,10 @@ class request
             'CONTENT_MD5'    => 'Content-Md5',
         ];
 
-        foreach ($_SERVER as $key => $value)
-        {
-            if (substr($key, 0, 5) === 'HTTP_')
-            {
+        foreach ($_SERVER as $key => $value) {
+            if (substr($key, 0, 5) === 'HTTP_') {
                 $key = substr($key, 5);
-                if (!isset($copy_server[$key]) || !isset($_SERVER[$key]))
-                {
+                if (!isset($copy_server[$key]) || !isset($_SERVER[$key])) {
                     $key = str_replace('_', ' ', $key);
                     $key = strtolower($key);
                     $key = ucwords($key);
@@ -142,29 +159,18 @@ class request
 
                     $headers[$key] = $value;
                 }
-            }
-
-            elseif (isset($copy_server[$key]))
-            {
+            } elseif (isset($copy_server[$key])) {
                 $headers[$copy_server[$key]] = $value;
             }
         }
 
-        if (!isset($headers['Authorization']))
-        {
-            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']))
-            {
+        if (!isset($headers['Authorization'])) {
+            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
                 $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-            }
-
-            elseif (isset($_SERVER['PHP_AUTH_USER']))
-            {
+            } elseif (isset($_SERVER['PHP_AUTH_USER'])) {
                 $basic_pass               = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $headers['Authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $basic_pass);
-            }
-
-            elseif (isset($_SERVER['PHP_AUTH_DIGEST']))
-            {
+            } elseif (isset($_SERVER['PHP_AUTH_DIGEST'])) {
                 $headers['Authorization'] = $_SERVER['PHP_AUTH_DIGEST'];
             }
         }

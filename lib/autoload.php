@@ -17,8 +17,7 @@ class autoload
      */
     public function __construct(string $namespace = '', string $path = null)
     {
-        if (!$path)
-        {
+        if (!$path) {
             $path = dirname($_SERVER['SCRIPT_FILENAME']);
         }
 
@@ -30,8 +29,7 @@ class autoload
      */
     public function __destruct()
     {
-        foreach ($this->paths as $namespace => $path)
-        {
+        foreach ($this->paths as $namespace => $path) {
             $this->unregister($namespace);
         }
     }
@@ -47,11 +45,9 @@ class autoload
      */
     public function register(string $namespace = '', string $path = './'): bool
     {
-        if (!file_exists($path))
-        {
+        if (!file_exists($path)) {
             $path = __DIR__ . '/../../' . $path;
-            if (!file_exists($path))
-            {
+            if (!file_exists($path)) {
                 throw new \InvalidArgumentException("Autoload path not exist: '{$path}'");
             }
         }
@@ -59,18 +55,15 @@ class autoload
         $namespace = strtolower($namespace);
         $path      = rtrim($path, '\\/');
 
-        if (empty($this->paths[$namespace]))
-        {
+        if (empty($this->paths[$namespace])) {
             $this->paths[$namespace] = [];
         }
 
-        if (!in_array($path, $this->paths[$namespace]))
-        {
+        if (!in_array($path, $this->paths[$namespace])) {
             $this->paths[$namespace][] = $path;
         }
 
-        if (!$this->registered)
-        {
+        if (!$this->registered) {
             $this->registered = spl_autoload_register([$this, 'load']);
         }
 
@@ -86,34 +79,25 @@ class autoload
      */
     public function unregister(string $namespace = '', string $path = '')
     {
-        if (empty($this->paths[$namespace]))
-        {
+        if (empty($this->paths[$namespace])) {
             throw new \InvalidArgumentException("Autoloader namespace is not registered: {$namespace}");
         }
 
-        if (empty($path))
-        {
+        if (empty($path)) {
             unset($this->paths[$namespace]);
-        }
-
-        else
-        {
-            foreach ($this->paths[$namespace] as $i => $p)
-            {
-                if ($p == $path)
-                {
+        } else {
+            foreach ($this->paths[$namespace] as $i => $p) {
+                if ($p == $path) {
                     unset($this->paths[$namespace][$i]);
                 }
             }
 
-            if (empty($this->paths[$namespace]))
-            {
+            if (empty($this->paths[$namespace])) {
                 unset($this->paths[$namespace]);
             }
         }
 
-        if (empty($this->paths) && $this->registered)
-        {
+        if (empty($this->paths) && $this->registered) {
             $this->registered = !spl_autoload_unregister([$this, 'load']);
         }
     }
@@ -128,12 +112,9 @@ class autoload
     protected function load(string $class): bool
     {
         $namespace = null;
-        foreach ($this->paths as $ns => $path)
-        {
-            if (!empty($ns) && stripos($class . "\\", $ns . "\\") !== false)
-            {
-                if ($class !== $ns)
-                {
+        foreach ($this->paths as $ns => $path) {
+            if (!empty($ns) && stripos($class . "\\", $ns . "\\") !== false) {
+                if ($class !== $ns) {
                     $class = trim(str_ireplace($ns, '', $class), '\\');
                 }
 
@@ -144,13 +125,9 @@ class autoload
 
         // build search_single array from namespace array
         $paths = [];
-        if (!is_null($namespace))
-        {
+        if (!is_null($namespace)) {
             $paths = $this->paths[$namespace];
-        }
-
-        elseif (isset($this->paths['']))
-        {
+        } elseif (isset($this->paths[''])) {
             $paths = $this->paths[''];
         }
 
@@ -158,32 +135,26 @@ class autoload
         $filename = str_replace('\\', '/', $class);
         $basename = basename($filename);
 
-        foreach ($paths as $path)
-        {
+        foreach ($paths as $path) {
             $simplepath = "{$path}/{$filename}.php";
             $subpath    = "{$path}/{$filename}/{$basename}.php";
 
             $search [] = $simplepath;
-            if ($class !== '')
-            {
+            if ($class !== '') {
                 $search [] = $subpath;
             }
 
             if ($this->ignore_case
-                && strtolower($simplepath) !== $simplepath)
-            {
+                && strtolower($simplepath) !== $simplepath) {
                 $search [] = strtolower($simplepath);
-                if ($class !== '')
-                {
+                if ($class !== '') {
                     $search [] = strtolower($subpath);
                 }
             }
         }
 
-        foreach ($search as $file)
-        {
-            if (file_exists($file))
-            {
+        foreach ($search as $file) {
+            if (file_exists($file)) {
                 require_once($file);
                 return true;
             }

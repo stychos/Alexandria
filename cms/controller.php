@@ -10,23 +10,17 @@ class controller
     {
         $class = explode("\\", get_called_class());
         $count = count($class);
-        if ($count > 1)
-        {
+        if ($count > 1) {
             $classname = $class[$count - 2];
-        }
-        else
-        {
+        } else {
             $classname = $class[0];
         }
 
         $action = cms::uri()->assoc($classname);
         $arg = cms::uri()->assoc($action);
-        if (method_exists($this, $action))
-        {
+        if (method_exists($this, $action)) {
             $this->$action($arg);
-        }
-        else
-        {
+        } else {
             cms::router()->continue();
         }
     }

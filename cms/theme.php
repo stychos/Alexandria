@@ -7,7 +7,7 @@
 
 namespace alexandria\cms;
 
-use \alexandria\cms;
+use alexandria\cms;
 
 /**
  * Theme CMS Library
@@ -26,8 +26,7 @@ class theme extends cms
 
     public function __construct($args = null)
     {
-        if (is_array($args))
-        {
+        if (is_array($args)) {
             $args = (object) $args;
         }
 
@@ -64,8 +63,7 @@ class theme extends cms
 
     public function prepare()
     {
-        if (!$this->started)
-        {
+        if (!$this->started) {
             ob_start();
             $this->started = true;
         }
@@ -87,10 +85,8 @@ class theme extends cms
             "{$this->root}/alexandria/cms/{$form}.php",
         ];
 
-        foreach ($search as $file)
-        {
-            if (file_exists($file) && !is_dir($file))
-            {
+        foreach ($search as $file) {
+            if (file_exists($file) && !is_dir($file)) {
                 return \alexandria\lib\form::load($file, $vars);
             }
         }
@@ -100,13 +96,11 @@ class theme extends cms
 
     public function render(): string
     {
-        if (!file_exists("{$this->theme}/{$this->entry}"))
-        {
+        if (!file_exists("{$this->theme}/{$this->entry}")) {
             throw new \RuntimeException("Theme file not found: {$this->theme}/{$this->entry}");
         }
 
-        if (!$this->started)
-        {
+        if (!$this->started) {
             throw new \RuntimeException("Theme buffer was not started, nothing to render.");
         }
 
@@ -117,8 +111,7 @@ class theme extends cms
         require "{$this->theme}/{$this->entry}";
         $render = ob_get_clean();
 
-        if (strpos($render, '{content}') === false)
-        {
+        if (strpos($render, '{content}') === false) {
             throw new \RuntimeException('Theme has no {content} section.');
         }
 
@@ -129,17 +122,13 @@ class theme extends cms
         // Widgets
         $matches = null;
         preg_match_all('/\{\{[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*\}\}/', $render, $matches);
-        if (!empty($matches[0]))
-        {
-            foreach ($matches[0] as $name)
-            {
+        if (!empty($matches[0])) {
+            foreach ($matches[0] as $name) {
                 $var = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
                 $var = str_replace('/', '\\', $var);
 
-                foreach ([$var, "{$var}\\controller"] as $controller)
-                {
-                    if (method_exists($controller, '__widget'))
-                    {
+                foreach ([$var, "{$var}\\controller"] as $controller) {
+                    if (method_exists($controller, '__widget')) {
                         $to     = $controller::__widget();
                         $to     = str_replace('{theme}', $this->wtheme, $to);
                         $to     = str_replace('{root}', $this->wroot, $to);
@@ -153,10 +142,8 @@ class theme extends cms
         // Config variables
         $matches = null;
         preg_match_all('/\{\[[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\]\}/', $render, $matches);
-        if (!empty($matches[0]))
-        {
-            foreach ($matches[0] as $name)
-            {
+        if (!empty($matches[0])) {
+            foreach ($matches[0] as $name) {
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
                 $val    = self::config()->$var;
                 $render = !empty($val) && is_scalar($val) ?
@@ -170,8 +157,7 @@ class theme extends cms
 
     public function __destruct()
     {
-        if ($this->started)
-        {
+        if ($this->started) {
             ob_end_flush();
         }
     }

@@ -13,31 +13,28 @@ class firewall
     public function __construct($config)
     {
         // it's don't works on cli
-        if (PHP_SAPI === 'cli')
-        {
+        if (PHP_SAPI === 'cli') {
             return;
         }
 
         $ip = $_SERVER['REMOTE_ADDR'];
-        if ($ip === '::1')
-        {
+        if ($ip === '::1') {
             $ip = '127.0.0.1';
         }
 
-        foreach (['allow', 'deny'] as $action)
-        {
-            foreach ($config[$action] as $rule)
-            {
+        foreach (['allow', 'deny'] as $action) {
+            foreach ($config[$action] as $rule) {
                 // rewrite aliases
-                if     ($rule === 'all')       $rule = '0.0.0.0/0';
-                elseif ($rule === 'localhost') $rule = '127.0.0.1';
+                if ($rule === 'all') {
+                    $rule = '0.0.0.0/0';
+                } elseif ($rule === 'localhost') {
+                    $rule = '127.0.0.1';
+                }
 
                 // no ip-related symbols found, get ip by hostname
-                if (preg_match('~[^0-9\./]~', $rule))
-                {
+                if (preg_match('~[^0-9\./]~', $rule)) {
                     $tmp = gethostbyname($rule);
-                    if ($tmp === $rule)
-                    {
+                    if ($tmp === $rule) {
                         // skip named rule if can't resolve
                         continue;
                     }
@@ -46,15 +43,12 @@ class firewall
                 }
 
                 // add netmask to the ip-rules if needed
-                if (!preg_match('#/\d+$#', $rule))
-                {
+                if (!preg_match('#/\d+$#', $rule)) {
                     $rule .= '/32';
                 }
 
-                if ($this->_match($ip, $rule))
-                {
-                    switch($action)
-                    {
+                if ($this->_match($ip, $rule)) {
+                    switch ($action) {
                         case 'allow':
                             return;
                         break;
@@ -74,7 +68,7 @@ class firewall
      */
     protected function _match($ip, $mask)
     {
-        list ($subnet, $bits) = @explode('/', $mask);
+        list($subnet, $bits) = @explode('/', $mask);
         $ip     = ip2long($ip);
         $subnet = ip2long($subnet);
         $mask   = -1 << (32 - $bits);
