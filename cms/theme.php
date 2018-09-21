@@ -107,6 +107,12 @@ class theme extends cms
         $buffer        = ob_get_clean();
         $this->started = false;
 
+        try {
+            $user = cms::module('user\au1th')::login();
+        } catch (\throwable $e) {
+            $user = false;
+        }
+
         ob_start();
         require "{$this->theme}/{$this->entry}";
         $render = ob_get_clean();

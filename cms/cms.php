@@ -48,48 +48,52 @@ class cms
     {
         self::$config = $config;
 
-        if (!empty(self::$config['firewall'])) {
-            self::firewall(self::$config['firewall']);
-        }
-
         if (empty(self::$config['router'])) {
             return;
         }
 
         if (!empty(self::$config['router']['path_rewrites'])) {
-            self::uri()->add_aliases(self::$config['router']['path_rewrites']);
+            self::module('uri')->add_aliases(self::$config['router']['path_rewrites']);
         }
 
         if (!stristr(PHP_SAPI, 'cli')) {
-            self::theme();
+            self::module('theme');
         }
 
         if (empty(self::$config['router']['autoroute_path'])) {
-            self::$config['router']['autoroute_path'] = self::uri()->all();
+            self::$config['router']['autoroute_path'] = self::module('uri')->all();
         }
 
-        self::load('router', [self::$config['router']]);
+        self::module('router', [self::$config['router']]);
         if (!empty(self::$config['router']['autoroute'])) {
-            self::router()->autoroute();
+            self::module('router')->autoroute();
         }
 
         if (!stristr(PHP_SAPI, 'cli')) {
-            return self::theme()->render();
+            return self::module('theme')->render();
         }
     }
 
     /**
-     * Load class to the CMS registry
-     * extends autoload with the searching for classes within CMS hierarchy
+     * Load classes to the CMS registry or return loaded one
      *
      * @param string $module
      * @param array  $args
-     *
-     * @return \ReflectionClass
-     * @throws \ReflectionException
+     * @param bool   $new_instance Create new instance instead of cached one
+     * @param bool   $exception_on_fail Raise exception if module was not found
      */
-    protected static function load(string $module, array $args = [])
+    public static function module(string $module, array $args = [], bool $new_instance = false, bool $exception_on_fail = true)
     {
+        if (!empty(self::$cache[$module]) && !$new_instance) {
+            return self::$cache[$module];
+        }
+
+        // Load config from starter if no variables passed
+        if (empty($args) && !empty(self::$config[$module])) {
+            $args = [self::$config[$module]];
+        }
+
+        // Priority: Local > CMS > Libraries
         $try = [
             $module,
             'alexandria\\cms\\' . $module,
@@ -104,33 +108,21 @@ class cms
             }
         }
 
-        throw new \RuntimeException("Can not find module {$module}.");
-    }
-
-    public static function registry(string $module, array $args = [])
-    {
-        if (empty($args) && !empty(self::$config[$module])) {
-            $args = [self::$config[$module]];
+        if ($exception_on_fail) {
+            throw new \RuntimeException("Can not find module {$module}.");
         }
-
-        $module = empty(self::$cache[$module])
-            ? self::load($module, $args)
-            : self::$cache[$module];
-
-        return $module;
     }
 
     /**
-     * CMS classes registry load/call initiator
+     * Magic!
      *
      * @param string $module
      * @param array  $args
      *
      * @return mixed
-     * @throws \ReflectionException
      */
     public static function __callStatic(string $module, array $args = [])
     {
-        return self::registry($module, $args);
+        return self::module($module, $args);
     }
 }
