@@ -11,7 +11,10 @@ class controller
         $class = explode("\\", get_called_class());
         $count = count($class);
         if ($count > 1) {
-            $classname = $class[$count - 2];
+            $classname = $class[$count - 1];
+            if ($classname == 'controller') {
+                $classname = $class[$count - 2];
+            }
         } else {
             $classname = $class[0];
         }
