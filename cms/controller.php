@@ -30,6 +30,13 @@ class controller
         }
     }
 
+    protected function ajax_response($data)
+    {
+        $data['success'] = empty($data['error']);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        die();
+    }
+
     public static function __widget()
     {
         return get_called_class() . " widget";
