@@ -13,7 +13,7 @@ class router
     protected $rewrites;
 
     protected $search_controllers;
-    protected $continue = false;
+    protected $continue;
     protected $active_route;
     protected $tail;
 
@@ -65,7 +65,16 @@ class router
     public function autoroute(bool $use_fallback = true)
     {
         // run pre-routes first
+        $this->continue = true;
         $this->preroute();
+
+        // some preroute controller told us to halt
+        if (!$this->continue) {
+            return;
+        }
+
+        // do not autocontinue after prerouting
+        $this->continue = false;
 
         // main routing cycle, walking up by query path
         $routed = false;
@@ -141,10 +150,17 @@ class router
         $this->continue = true;
     }
 
+    public function stop()
+    {
+        $this->continue = false;
+    }
+
     protected function preroute()
     {
         foreach ($this->pre_routes as $route) {
-            $this->route($route);
+            if ($this->continue) {
+                $this->route($route);
+            }
         }
     }
 
