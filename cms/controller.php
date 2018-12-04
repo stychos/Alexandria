@@ -24,8 +24,7 @@ class controller
         if (method_exists($this, $action)) {
             $this->$action($arg);
         } elseif (method_exists($this, 'main')) {
-            $arg = cms::uri()->assoc($classname);
-            $this->main($arg);
+            $this->main();
         } else {
             cms::router()->continue();
         }
