@@ -12,7 +12,6 @@ if (!isset($_SERVER['PATH_INFO'])) {
  *
  * @method cms\config config() static
  * @method cms\theme theme() static
- *
  * @method lib\autoload autoload() static
  * @method lib\db\ddi db() static
  * @method lib\docker docker() static
@@ -40,8 +39,6 @@ class cms
      * Starts CMS cycle.
      *
      * @param array $config Modules configuration in [ 'module' => $config ] associative array.
-     *
-     * @return void This function does not return anything.
      * @throws \exception
      */
     public static function start(array $config = [])
@@ -79,8 +76,10 @@ class cms
      *
      * @param string $module
      * @param array  $args
-     * @param bool   $new_instance Create new instance instead of cached one
+     * @param bool   $new_instance      Create new instance instead of cached one
      * @param bool   $exception_on_fail Raise exception if module was not found
+     * @return mixed
+     * @throws \ReflectionException
      */
     public static function module(string $module, array $args = [], bool $new_instance = false, bool $exception_on_fail = true)
     {
@@ -118,8 +117,8 @@ class cms
      *
      * @param string $module
      * @param array  $args
-     *
      * @return mixed
+     * @throws \ReflectionException
      */
     public static function __callStatic(string $module, array $args = [])
     {
