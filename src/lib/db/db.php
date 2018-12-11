@@ -9,40 +9,35 @@ namespace alexandria\lib;
  */
 class db
 {
-	public $stats;
+    public $stats;
 
-	protected $driver;
+    protected $driver;
 
-	public function __construct($args)
-	{
-		$stamp = microtime(true);
-		$this->stats = (object) [
-			'queries' => 0,
-			'time' => 0,
-		];
+    public function __construct($args)
+    {
+        $stamp = microtime(true);
+        $this->stats = (object) [
+            'queries' => 0,
+            'time' => 0,
+        ];
 
-		if(is_object($args))
-		{
-			$args = (array) $args;
-		}
+        if (is_object($args)) {
+            $args = (array) $args;
+        }
 
-		if (empty($args['driver']))
-		{
-			Throw new \InvalidArgumentException('Driver can not be empty.');
-		}
+        if (empty($args['driver'])) {
+            throw new \InvalidArgumentException('Driver can not be empty.');
+        }
 
-		try
-		{
-			$reflect = new \ReflectionClass(__NAMESPACE__.'\\db\\drivers\\'.$args['driver']);
-			$this->driver = $reflect->newInstance($args);
-		}
-		catch (\Exception $e)
-		{
-			Throw new \RuntimeException("Driver error: {$e->getMessage()}");
-		}
+        try {
+            $reflect = new \ReflectionClass(__NAMESPACE__.'\\db\\drivers\\'.$args['driver']);
+            $this->driver = $reflect->newInstance($args);
+        } catch (\Exception $e) {
+            throw new \RuntimeException("Driver error: {$e->getMessage()}");
+        }
 
-		$this->stats->time += microtime(true) - $stamp;
-	}
+        $this->stats->time += microtime(true) - $stamp;
+    }
 
     /**
      * @param $func
@@ -51,15 +46,15 @@ class db
      * @throws \ReflectionException
      */
     public function __call($func, $args)
-	{
-		$stamp = microtime(true);
-		$reflect = new \ReflectionMethod($this->driver, $func);
-		$ret = $reflect->invokeArgs($this->driver, $args);
+    {
+        $stamp = microtime(true);
+        $reflect = new \ReflectionMethod($this->driver, $func);
+        $ret = $reflect->invokeArgs($this->driver, $args);
 
-		$this->stats->time += microtime(true) - $stamp;
-		$this->stats->queries++;
-		return $ret;
-	}
+        $this->stats->time += microtime(true) - $stamp;
+        $this->stats->queries++;
+        return $ret;
+    }
 
     public function get_driver()
     {
