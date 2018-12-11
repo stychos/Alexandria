@@ -2,11 +2,6 @@
 
 namespace alexandria;
 
-// Pathinfo fix (on empty path nginx dont create this cgi variable)
-if (!isset($_SERVER['PATH_INFO'])) {
-    $_SERVER['PATH_INFO'] = '';
-}
-
 /**
  * CMS registry
  *
@@ -47,6 +42,11 @@ class cms
 
         if (empty(self::$config['router'])) {
             return;
+        }
+
+        // Pathinfo fix (on empty path nginx dont create this cgi variable)
+        if (!isset($_SERVER['PATH_INFO'])) {
+            $_SERVER['PATH_INFO'] = '';
         }
 
         if (!empty(self::$config['router']['path_rewrites'])) {
