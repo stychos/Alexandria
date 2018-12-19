@@ -30,10 +30,12 @@ class controller
         }
     }
 
-    protected function ajax_response($data)
-    {
+    protected function ajax_response(
+        $data,
+        int $format = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+    ) {
         $data['success'] = empty($data['error']);
-        echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        echo json_encode($data, $format);
         die();
     }
 
