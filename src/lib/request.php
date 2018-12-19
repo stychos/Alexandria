@@ -15,7 +15,7 @@ class request
     {
         if (stripos(PHP_SAPI, 'CLI') !== false) {
             $this->method = 'CLI';
-            $this->data   = '';
+            $this->data   = $_SERVER['argv'];
         } else {
             $this->method = strtoupper($_SERVER['REQUEST_METHOD']);
             $this->data   = $this->method === 'GET'
