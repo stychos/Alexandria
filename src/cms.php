@@ -4,24 +4,7 @@ namespace alexandria;
 
 /**
  * CMS registry
- *
- * @method cms\config config() static
- * @method cms\theme theme() static
- * @method lib\autoload autoload() static
- * @method lib\db\ddi db() static
- * @method lib\docker docker() static
- * @method lib\form form() static
- * @method lib\firewall firewall() static
- * @method lib\http http() static
- * @method lib\request request() static
- * @method lib\response response() static
- * @method lib\router router() static
- * @method lib\security security() static
- * @method lib\smtp smtp() static
- * @method lib\ssh ssh() static
- * @method lib\uploads uploads() static
- * @method lib\uri uri() static
- */
+  */
 class cms
 {
     /** Takes classes configuration data and calls loaded classes with appropriate data from this vars */
@@ -113,8 +96,7 @@ class cms
     }
 
     /**
-     * Magic!
-     *
+     * @deprecated Using of magic accessors is strongly discouraged
      * @param string $module
      * @param array  $args
      * @return mixed

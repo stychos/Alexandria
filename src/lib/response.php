@@ -10,9 +10,12 @@ class response
 
     public function set_header(string $header, string $value)
     {
-        return !headers_sent()
-               ? header("{$header}: {$value}", true)
-               : false;
+        if (!headers_sent()) {
+            header("{$header}: {$value}", true);
+            return true;
+        }
+
+        return false;
     }
 
     public function write(string $message): string
@@ -29,7 +32,7 @@ class response
     {
         $out = json_encode($object, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
         if ($out === false) {
-            throw new \exception("Can not encode output: ".json_last_error_msg());
+            throw new \Exception("Can not encode output: ".json_last_error_msg());
         }
 
         $this->set_header('Content-Type', 'application/json');
