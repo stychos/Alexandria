@@ -34,7 +34,7 @@ class Docker
         $response = @file_get_contents($this->api.'/'.$query);
         $e = error_get_last();
         if (!empty($e)) {
-            throw new \exception("Can't do the [GET] call: {$e['message']}");
+            throw new \Exception("Can't do the [GET] call: {$e['message']}");
         }
 
         $response = json_decode($response);
@@ -63,7 +63,7 @@ class Docker
         $response = @file_get_contents($this->api.'/'.$query, false, $context);
         $e = error_get_last();
         if (!empty($e)) {
-            throw new \exception("Can't do the [POST] call: {$e['message']}");
+            throw new \Exception("Can't do the [POST] call: {$e['message']}");
         }
 
         $response = json_decode($response);
@@ -84,7 +84,7 @@ class Docker
         $response = @file_get_contents($this->api.'/'.$query, false, $context);
         $e = error_get_last();
         if (!empty($e)) {
-            throw new \exception("Can't do the [DELETE] call: {$e['message']}");
+            throw new \Exception("Can't do the [DELETE] call: {$e['message']}");
         }
 
         $response = json_decode($response);

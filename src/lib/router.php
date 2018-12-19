@@ -60,7 +60,7 @@ class router
      * @param bool $use_fallback
      *
      * @return bool
-     * @throws \exception
+     * @throws \Exception
      */
     public function autoroute(bool $use_fallback = true)
     {
@@ -122,7 +122,7 @@ class router
                 http_response_code(404);
             }
 
-            throw new \exception("Route class for {$this->autoroute_path} not found. Default and fail routes are not found too. Check your configuration.");
+            throw new \Exception("Route class for {$this->autoroute_path} not found. Default and fail routes are not found too. Check your configuration.");
         }
 
         return true;
