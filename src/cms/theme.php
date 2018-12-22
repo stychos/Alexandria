@@ -127,7 +127,7 @@ class theme extends cms
 
         // Widgets
         $matches = null;
-        preg_match_all('/\{\{[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff\/]*\}\}/', $render, $matches);
+        preg_match_all('/\{\{[a-zA-Z_\x7f-\xff][\\a-zA-Z0-9_\x7f-\xff\/]*\}\}/', $render, $matches);
         if (!empty($matches[0])) {
             foreach ($matches[0] as $name) {
                 $var = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
