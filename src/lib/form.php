@@ -50,12 +50,12 @@ class form
             foreach (array_unique($__to_replace['name']) as $__index => $__var) {
                 $__src = $__to_replace[0][$__index];
 
-                // Check in extracted variables
+                // Check in extracted scalar variables
                 if (isset($__vars[$__var]) && is_scalar($__vars[$__var])) {
                     $__content = str_replace($__src, htmlspecialchars($__vars[$__var]), $__content);
                 }
 
-                // Otherwise, try to find appropriate constant. Constants are always scalar.
+                // Otherwise, try to find appropriate constant, always scalar
                 elseif (defined($__var)) {
                     $__content = str_replace($__src, htmlspecialchars(constant($__var)), $__content);
                 }
@@ -63,7 +63,8 @@ class form
                 // Check for objects
                 else {
                     $__var = preg_replace('~\{\$?(.+)\}~', '$1', $__src);
-                    $__val = eval("return \${$__var} ?? '{$__src}';");
+                    $__esrc = addslashes($__src);
+                    $__val = eval("return \${$__var} ?? '{$__esrc}';");
                     $__content = str_replace($__src, htmlspecialchars($__val), $__content);
                 }
             }

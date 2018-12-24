@@ -147,14 +147,20 @@ class theme extends cms
 
         // Assigned variables
         $matches = null;
-        preg_match_all('/\{\$?(?<var>[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
+        preg_match_all('/\{\$?(?<var>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
         if (!empty($matches['var'])) {
             foreach ($matches['var'] as $index => $name) {
                 $src    = $matches[0][$index];
                 $val    = $this->vars[$name] ?? null;
-                $render = !empty($val) && is_scalar($val)
-                    ? str_replace($src, htmlspecialchars($val), $render)
-                    : str_replace($src, '', $render);
+                if (!empty($val) && is_scalar($val)) {
+                    $render = str_replace($src, htmlspecialchars($val), $render);
+                } else {
+                    $var = preg_replace('~\{\$?(.+)\}~', '$1', $src);
+                    $esrc = addslashes($src);
+                    $cmd = "return \${$var} ?? '{$esrc}';";
+                    $val = eval($cmd);
+                    $render = str_replace($src, htmlspecialchars($val), $render);
+                }
             }
         }
 
