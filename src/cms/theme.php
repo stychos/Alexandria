@@ -54,6 +54,8 @@ class theme extends cms
         $this->wtheme = $args->wtheme ?? "{$this->wthemes}/{$this->name}";
         $this->entry  = $args->entry ?? 'theme.php';
         $this->appdir = $args->appdir ?? '';
+
+        $this->vars = [];
         $this->prepare();
     }
 
@@ -132,6 +134,8 @@ class theme extends cms
 
         ob_start();
         extract($this->vars, EXTR_SKIP);
+        var_dump(get_defined_vars());
+        die();
         require "{$this->theme}/{$this->entry}";
         $render = ob_get_clean();
 
@@ -148,8 +152,8 @@ class theme extends cms
         preg_match_all('/\{\$?(?<var>[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
         if (!empty($matches['var'])) {
             foreach ($matches['var'] as $index => $name) {
-                $src = $matches[0][$index];
-                $val = $this->vars[$name] ?? null;
+                $src    = $matches[0][$index];
+                $val    = $this->vars[$name] ?? null;
                 $render = !empty($val) && is_scalar($val)
                     ? str_replace($src, htmlspecialchars($val), $render)
                     : str_replace($src, '', $render);
