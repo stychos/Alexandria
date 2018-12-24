@@ -95,7 +95,7 @@ class theme extends cms
 
     public function load_form(string $form, array $vars = [])
     {
-        if (!$this->appdir) {
+        if ($this->appdir) {
             $form = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
             $filename = "{$this->appdir}/{$form}.php";
             if (file_exists($filename)) {
