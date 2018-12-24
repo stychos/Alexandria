@@ -49,7 +49,7 @@ class controller
         return cms::module('theme')->show_form($form, $args);
     }
 
-    protected function load(string $module, array $args = [], bool $new_instance = false)
+    protected function get(string $module, array $args = [], bool $new_instance = false)
     {
         return cms::module($module, $args, $new_instance);
     }
