@@ -43,4 +43,9 @@ class controller
     {
         return get_called_class() . " widget";
     }
+
+    protected function view(string $form, array $args = [])
+    {
+        return cms::module('theme')->show_form($form, $args);
+    }
 }
