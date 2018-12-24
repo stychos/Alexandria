@@ -21,6 +21,8 @@ class theme extends cms
     protected $themes;
     protected $wtheme;
     protected $wthemes;
+    protected $appdir;
+    protected $formsdirs;
     protected $started;
     protected $entry;
 
@@ -30,10 +32,16 @@ class theme extends cms
             $args = (object) $args;
         }
 
-        $proto = @$_SERVER['HTTPS'] && $_SERVER['HTTPS'] != 'off' || @$_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http';
-        $wroot = @$_SERVER['HTTP_HOST'] ? $proto . '://' . rtrim($_SERVER['HTTP_HOST'], '/') : '';
+        $proto = @$_SERVER['HTTPS'] && $_SERVER['HTTPS'] != 'off' || @$_SERVER['SERVER_PORT'] == 443
+            ? 'https'
+            : 'http';
+
+        $wroot = @$_SERVER['HTTP_HOST']
+            ? $proto.'://'.rtrim($_SERVER['HTTP_HOST'], '/')
+            : '';
+
         $sub   = preg_replace("#(/index\.php)?{$_SERVER['PATH_INFO']}#", '', $_SERVER['PHP_SELF']);
-        $wroot .= !empty($sub) ? "{$sub}" : '';
+        $wroot .= $sub;
 
         $this->root  = $args->root ?? dirname($_SERVER['SCRIPT_FILENAME']);
         $this->wroot = $args->wroot ?? $wroot;
@@ -45,6 +53,12 @@ class theme extends cms
         $this->theme  = $args->theme ?? "{$this->themes}/{$this->name}";
         $this->wtheme = $args->wtheme ?? "{$this->wthemes}/{$this->name}";
         $this->entry  = $args->entry ?? 'theme.php';
+
+        $this->appdir    = $args->appdir ?? '';
+        $this->formsdirs = $args->formsdirs ?? [
+                "{$this->theme}/forms",
+                "{$this->root}/forms",
+            ];
 
         $this->prepare();
     }
@@ -69,6 +83,11 @@ class theme extends cms
         }
     }
 
+    public function add_forms_path(string $path)
+    {
+        $this->appdirs [] = $path;
+    }
+
     public function show_form(string $form, array $vars = [])
     {
         echo $this->load_form($form, $vars);
@@ -76,18 +95,18 @@ class theme extends cms
 
     public function load_form(string $form, array $vars = [])
     {
-        $search = [
-            "{$this->root}/forms/{$form}.html",
-            "{$this->root}/forms/{$form}.php",
-            "{$this->theme}/forms/{$form}.html",
-            "{$this->theme}/forms/{$form}.php",
-            "{$this->root}/alexandria/cms/{$form}.html",
-            "{$this->root}/alexandria/cms/{$form}.php",
-        ];
+        if (!$this->appdir) {
+            $form = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
+            $filename = "{$this->appdir}/{$form}.php";
+            if (file_exists($filename)) {
+                return \alexandria\lib\form::load($filename, $vars);
+            }
+        }
 
-        foreach ($search as $file) {
-            if (file_exists($file) && !is_dir($file)) {
-                return \alexandria\lib\form::load($file, $vars);
+        foreach ($this->formsdirs as $dir) {
+            $filename = "{$dir}/{$form}.php";
+            if (file_exists($filename)) {
+                return \alexandria\lib\form::load($filename, $vars);
             }
         }
 
@@ -109,7 +128,8 @@ class theme extends cms
 
         try {
             $user = cms::module('user\au1th')::login();
-        } catch (\throwable $e) {
+        }
+        catch (\throwable $e) {
             $user = false;
         }
 
@@ -152,8 +172,10 @@ class theme extends cms
             foreach ($matches[0] as $name) {
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
                 $val    = self::config()->$var;
-                $render = !empty($val) && is_scalar($val) ?
-                    str_replace($name, $val, $render) :
+                $render = !empty($val) && is_scalar($val)
+                    ?
+                    str_replace($name, $val, $render)
+                    :
                     str_replace($name, '', $render);
             }
         }
