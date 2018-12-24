@@ -83,7 +83,7 @@ class theme extends cms
     {
         foreach ($vars as $name => $value) {
             $this->vars[$name] = $value;
-        }
+        };
     }
 
     public function add_forms_path(string $path)
@@ -134,8 +134,6 @@ class theme extends cms
 
         ob_start();
         extract($this->vars, EXTR_SKIP);
-        var_dump(get_defined_vars());
-        die();
         require "{$this->theme}/{$this->entry}";
         $render = ob_get_clean();
 
