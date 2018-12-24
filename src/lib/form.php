@@ -52,13 +52,13 @@ class form
                 if (strpos($__mnemonic, '{$') === 0
                     && isset($__vars[$__var])
                     && is_scalar($__vars[$__var])) {
-                    $__content = str_replace($__mnemonic, $__vars[$__var], $__content);
+                    $__content = str_replace($__mnemonic, htmlspecialchars($__vars[$__var]), $__content);
                 }
 
                 // Otherwise, try to find appropriate constant. Constants are always scalar.
                 elseif (strpos($__mnemonic, '{$') !== 0
                         && defined($__var)) {
-                    $__content = str_replace($__mnemonic, constant($__var), $__content);
+                    $__content = str_replace($__mnemonic, htmlspecialchars(constant($__var)), $__content);
                 } elseif (strpos($__mnemonic, '{$') === 0) {
                     $__content = str_replace($__mnemonic, '', $__content);
                 }

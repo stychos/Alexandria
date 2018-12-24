@@ -24,6 +24,7 @@ class theme extends cms
     protected $appdir;
     protected $started;
     protected $entry;
+    protected $vars;
 
     public function __construct($args = null)
     {
@@ -76,6 +77,13 @@ class theme extends cms
         }
     }
 
+    public function add_vars(array $vars)
+    {
+        foreach ($vars as $name => $value) {
+            $this->vars[$name] = $value;
+        }
+    }
+
     public function add_forms_path(string $path)
     {
         $this->appdirs [] = $path;
@@ -89,7 +97,7 @@ class theme extends cms
     public function load_form(string $form, array $vars = [])
     {
         if ($this->appdir) {
-            $tform = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
+            $tform    = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
             $filename = "{$this->appdir}/{$tform}.php";
             if (file_exists($filename)) {
                 return \alexandria\lib\form::load($filename, $vars);
@@ -97,9 +105,9 @@ class theme extends cms
         }
 
         foreach ([
-            "{$this->theme}/forms",
-            "{$this->root}/forms",
-        ] as $dir) {
+                     "{$this->theme}/forms",
+                     "{$this->root}/forms",
+                 ] as $dir) {
             $filename = "{$dir}/{$form}.php";
             if (file_exists($filename)) {
                 return \alexandria\lib\form::load($filename, $vars);
@@ -122,13 +130,8 @@ class theme extends cms
         $buffer        = ob_get_clean();
         $this->started = false;
 
-        try {
-            $user = cms::module('user\au1th')::login();
-        } catch (\throwable $e) {
-            $user = false;
-        }
-
         ob_start();
+        extract($this->vars, EXTR_SKIP);
         require "{$this->theme}/{$this->entry}";
         $render = ob_get_clean();
 
@@ -139,6 +142,19 @@ class theme extends cms
         $render = str_replace('{content}', $buffer, $render);
         $render = str_replace('{theme}', $this->wtheme, $render);
         $render = str_replace('{root}', $this->wroot, $render);
+
+        // Assigned variables
+        $matches = null;
+        preg_match_all('/\{\$?(?<var>[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
+        if (!empty($matches['var'])) {
+            foreach ($matches['var'] as $index => $name) {
+                $src = $matches[0][$index];
+                $val = $this->vars[$name] ?? null;
+                $render = !empty($val) && is_scalar($val)
+                    ? str_replace($src, htmlspecialchars($val), $render)
+                    : str_replace($src, '', $render);
+            }
+        }
 
         // Widgets
         $matches = null;
@@ -168,10 +184,8 @@ class theme extends cms
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
                 $val    = self::config()->$var;
                 $render = !empty($val) && is_scalar($val)
-                    ?
-                    str_replace($name, $val, $render)
-                    :
-                    str_replace($name, '', $render);
+                    ? str_replace($name, $val, $render)
+                    : str_replace($name, '', $render);
             }
         }
 
