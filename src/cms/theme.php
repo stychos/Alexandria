@@ -22,7 +22,6 @@ class theme extends cms
     protected $wtheme;
     protected $wthemes;
     protected $appdir;
-    protected $formsdirs;
     protected $started;
     protected $entry;
 
@@ -53,13 +52,7 @@ class theme extends cms
         $this->theme  = $args->theme ?? "{$this->themes}/{$this->name}";
         $this->wtheme = $args->wtheme ?? "{$this->wthemes}/{$this->name}";
         $this->entry  = $args->entry ?? 'theme.php';
-
-        $this->appdir    = $args->appdir ?? '';
-        $this->formsdirs = $args->formsdirs ?? [
-                "{$this->theme}/forms",
-                "{$this->root}/forms",
-            ];
-
+        $this->appdir = $args->appdir ?? '';
         $this->prepare();
     }
 
@@ -96,14 +89,17 @@ class theme extends cms
     public function load_form(string $form, array $vars = [])
     {
         if ($this->appdir) {
-            $form = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
-            $filename = "{$this->appdir}/{$form}.php";
+            $tform = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
+            $filename = "{$this->appdir}/{$tform}.php";
             if (file_exists($filename)) {
                 return \alexandria\lib\form::load($filename, $vars);
             }
         }
 
-        foreach ($this->formsdirs as $dir) {
+        foreach ([
+            "{$this->theme}/forms",
+            "{$this->root}/forms",
+        ] as $dir) {
             $filename = "{$dir}/{$form}.php";
             if (file_exists($filename)) {
                 return \alexandria\lib\form::load($filename, $vars);
@@ -128,8 +124,7 @@ class theme extends cms
 
         try {
             $user = cms::module('user\au1th')::login();
-        }
-        catch (\throwable $e) {
+        } catch (\throwable $e) {
             $user = false;
         }
 
