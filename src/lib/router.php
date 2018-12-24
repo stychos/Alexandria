@@ -42,7 +42,6 @@ class router
         foreach ((array) $this->search_controllers as $class) {
             $controller = str_replace('{$route}', $route, $class);
             $controller = str_replace('/', '\\', $controller);
-
             if (class_exists($controller) && method_exists($controller, '__construct')) {
                 $this->active_route = $route;
                 $this->tail         = str_replace($original_route, '', $this->autoroute_path);
