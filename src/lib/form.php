@@ -45,22 +45,26 @@ class form
 
         // Replace content mnemonics, in example: {$var} will become to $var value, if found (and scalar) in passed variables.
         // Also, {CONST} will become to CONST constant value, if constant defined.
-        preg_match_all('/\{\$?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\}/', $__content, $__to_replace);
+        preg_match_all('/\{\$?(?<name>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $__content, $__to_replace);
         if (is_array($__to_replace[0]) && !empty($__to_replace[0])) {
-            foreach (array_unique($__to_replace[0]) as $__mnemonic) {
-                $__var = str_replace(['{', '}', '$'], '', $__mnemonic);
-                if (strpos($__mnemonic, '{$') === 0
-                    && isset($__vars[$__var])
-                    && is_scalar($__vars[$__var])) {
-                    $__content = str_replace($__mnemonic, htmlspecialchars($__vars[$__var]), $__content);
+            foreach (array_unique($__to_replace['name']) as $__index => $__var) {
+                $__src = $__to_replace[0][$__index];
+
+                // Check in extracted variables
+                if (isset($__vars[$__var]) && is_scalar($__vars[$__var])) {
+                    $__content = str_replace($__src, htmlspecialchars($__vars[$__var]), $__content);
                 }
 
                 // Otherwise, try to find appropriate constant. Constants are always scalar.
-                elseif (strpos($__mnemonic, '{$') !== 0
-                        && defined($__var)) {
-                    $__content = str_replace($__mnemonic, htmlspecialchars(constant($__var)), $__content);
-                } elseif (strpos($__mnemonic, '{$') === 0) {
-                    $__content = str_replace($__mnemonic, '', $__content);
+                elseif (defined($__var)) {
+                    $__content = str_replace($__src, htmlspecialchars(constant($__var)), $__content);
+                }
+
+                // Check for objects
+                else {
+                    $__var = preg_replace('~\{\$?(.+)\}~', '$1', $__src);
+                    $__val = eval("return \${$__var} ?? '{$__src}';");
+                    $__content = str_replace($__src, htmlspecialchars($__val), $__content);
                 }
             }
         }
