@@ -147,20 +147,31 @@ class theme
 
         // Assigned variables
         $matches = null;
-        preg_match_all('/\{\$?(?<var>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
+        preg_match_all('/\{\$(?<var>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
         if (!empty($matches['var'])) {
             foreach ($matches['var'] as $index => $name) {
-                $src    = $matches[0][$index];
-                $val    = $this->vars[$name] ?? null;
+                $src = $matches[0][$index];
+                $val = $this->vars[$name] ?? null;
                 if (!empty($val) && is_scalar($val)) {
                     $render = str_replace($src, htmlspecialchars($val), $render);
-                } else {
-                    $var = preg_replace('~\{\$?(.+)\}~', '$1', $src);
-                    $esrc = addslashes($src);
-                    $cmd = "return \${$var} ?? '{$esrc}';";
-                    $val = eval($cmd);
+                }
+                else {
+                    $var    = preg_replace('~\{\$(.+)\}~', '$1', $src);
+                    $esrc   = addslashes($src);
+                    $cmd    = "return \${$var} ?? '{$esrc}';";
+                    $val    = eval($cmd);
                     $render = str_replace($src, htmlspecialchars($val), $render);
                 }
+            }
+        }
+
+        // Ret-Evaluations
+        preg_match_all('/<=\s*(?<eval>.+)=>/u', $render, $matches);
+        if (!empty($matches[0])) {
+            foreach ($matches['eval'] as $index => $cmd) {
+                $src    = $matches[0][$index];
+                $val    = eval("return {$cmd};");
+                $render = str_replace($src, htmlspecialchars($val), $render);
             }
         }
 
@@ -190,20 +201,10 @@ class theme
         if (!empty($matches[0])) {
             foreach ($matches[0] as $name) {
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
-                $val    = self::config()->$var;
+                $val    = cms::module('config')->$var;
                 $render = !empty($val) && is_scalar($val)
                     ? str_replace($name, $val, $render)
                     : str_replace($name, '', $render);
-            }
-        }
-
-        // Ret-Evaluations
-        preg_match_all('/<=\s*(?<eval>.+)=>/u', $render, $matches);
-        if (!empty($matches[0])) {
-            foreach ($matches['eval'] as $index => $cmd) {
-                $src = $matches[0][$index];
-                $val = eval("return {$cmd};");
-                $render = str_replace($src, htmlspecialchars($val), $render);
             }
         }
 
