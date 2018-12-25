@@ -4,7 +4,7 @@ namespace alexandria;
 
 /**
  * CMS registry
-  */
+ */
 class cms
 {
     /** Takes classes configuration data and calls loaded classes with appropriate data from this vars */
@@ -78,9 +78,9 @@ class cms
         // Priority: Local > CMS > Libraries
         $try = [
             $module,
-            $module . '\\controller',
-            'alexandria\\cms\\' . $module,
-            'alexandria\\lib\\' . $module,
+            $module.'\\controller',
+            'alexandria\\cms\\'.$module,
+            'alexandria\\lib\\'.$module,
         ];
 
         foreach ($try as $class) {
