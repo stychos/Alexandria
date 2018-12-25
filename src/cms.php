@@ -78,6 +78,7 @@ class cms
         // Priority: Local > CMS > Libraries
         $try = [
             $module,
+            $module . '\\controller',
             'alexandria\\cms\\' . $module,
             'alexandria\\lib\\' . $module,
         ];
