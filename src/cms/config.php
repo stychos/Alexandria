@@ -4,7 +4,7 @@ namespace alexandria\cms;
 
 use alexandria\cms;
 
-class config extends cms
+class config
 {
     protected $data;
     protected $table = 'config';
@@ -21,8 +21,9 @@ class config extends cms
         }
 
         try {
-            $this->table_exists = cms::db()->query("SELECT 1 FROM {$this->table} LIMIT 1");
-        } catch (\throwable $e) {
+            $this->table_exists = cms::module('db')->query("SELECT 1 FROM {$this->table} LIMIT 1");
+        }
+        catch (\throwable $e) {
             $this->table_exists = false;
         }
 
@@ -30,8 +31,8 @@ class config extends cms
         if ($this->table_exists) {
             // 2. read & override from database
             $data = cms::db()->query("
-            SELECT *
-            FROM {$this->table}");
+              SELECT *
+              FROM {$this->table}");
 
             foreach ($data as $index => $v) {
                 $value = (in_array($v->type, ['object', 'mixed', 'array']))
