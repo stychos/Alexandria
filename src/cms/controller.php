@@ -19,14 +19,16 @@ class controller
             $classname = $class[0];
         }
 
-        $action = cms::uri()->assoc($classname);
-        $arg = cms::uri()->assoc($action);
+        $action = cms::module('uri')->assoc($classname);
+        $arg = cms::module('uri')->assoc($action);
         if (method_exists($this, $action)) {
             $this->$action($arg);
+            cms::module('router')->stop();
         } elseif (method_exists($this, 'main')) {
             $this->main();
+            cms::module('router')->stop();
         } else {
-            cms::router()->continue();
+            cms::module('router')->continue();
         }
     }
 
@@ -51,6 +53,7 @@ class controller
 
     protected function get(string $module, array $args = [], bool $new_instance = false)
     {
+        $module = str_replace('/', '\\', $module);
         return cms::module($module, $args, $new_instance);
     }
 }
