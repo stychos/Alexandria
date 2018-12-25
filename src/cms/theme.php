@@ -197,6 +197,16 @@ class theme extends cms
             }
         }
 
+        // Ret-Evaluations
+        preg_match_all('/<=\s*(?<eval>.+)=>/u', $render, $matches);
+        if (!empty($matches[0])) {
+            foreach ($matches['eval'] as $index => $cmd) {
+                $src = $matches[0][$index];
+                $val = eval("return {$cmd};");
+                $render = str_replace($src, htmlspecialchars($val), $render);
+            }
+        }
+
         return $render;
     }
 

@@ -70,6 +70,16 @@ class form
             }
         }
 
+        // Ret-Evaluations
+        preg_match_all('/<=\s*(?<eval>.+)=>/u', $__content, $__to_replace);
+        if (is_array($__to_replace[0]) && !empty($__to_replace[0])) {
+            foreach (array_unique($__to_replace['eval']) as $__index => $__cmd) {
+                $__src = $__to_replace[0][$__index];
+                $__val = eval("return {$__cmd};");
+                $__content = str_replace($__src, htmlspecialchars($__val), $__content);
+            }
+        }
+
         return $__content;
     }
 
