@@ -12,7 +12,7 @@ use alexandria\cms;
 /**
  * Theme CMS Library
  */
-class theme extends cms
+class theme
 {
     protected $name;
     protected $root;
