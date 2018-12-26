@@ -98,7 +98,7 @@ class theme
 
     public function load_form(string $form, array $vars = [])
     {
-        if ($this->appdir) {
+        if ($this->appdir && strpos($form, '/') !== false) {
             $tform    = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
             $filename = "{$this->appdir}/{$tform}.php";
             if (file_exists($filename)) {
