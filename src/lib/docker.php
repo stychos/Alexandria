@@ -17,6 +17,7 @@ class Docker
 
     /**
      * Pass the raw HTTP GET query to the Docker API
+     *
      * @param  string $query   Query to call
      * @param  array  $filters Additional Docker API filters as an array
      */
@@ -25,14 +26,14 @@ class Docker
         $query = trim($query, '/');
         if (!empty($filters)) {
             $filters = http_build_query(['filters' => json_encode($filters)]);
-            $query .= strpos($query, '?') === false
+            $query   .= strpos($query, '?') === false
                 ? '?'.$filters
                 : '&'.$filters;
         }
 
         error_clear_last();
         $response = @file_get_contents($this->api.'/'.$query);
-        $e = error_get_last();
+        $e        = error_get_last();
         if (!empty($e)) {
             throw new \Exception("Can't do the [GET] call: {$e['message']}");
         }
@@ -43,25 +44,25 @@ class Docker
 
     /**
      * Pass the raw HTTP POST query to the Docker API
+     *
      * @param  string $query Query to call
      * @param  array  $args  Arguments to pass as an POST body
      */
     public function post(string $query, array $args = [])
     {
-        $query = trim($query, '/');
+        $query   = trim($query, '/');
         $options = [
             'http' => [
                 'method'  => 'POST',
                 'content' => json_encode($args, JSON_UNESCAPED_SLASHES),
-                'header'  =>  "Content-Type: application/json\r\n",
-            ]
+                'header'  => "Content-Type: application/json\r\n",
+            ],
         ];
-
 
         error_clear_last();
         $context  = stream_context_create($options);
         $response = @file_get_contents($this->api.'/'.$query, false, $context);
-        $e = error_get_last();
+        $e        = error_get_last();
         if (!empty($e)) {
             throw new \Exception("Can't do the [POST] call: {$e['message']}");
         }
@@ -72,6 +73,7 @@ class Docker
 
     /**
      * Pass the raw HTTP DELETE query to the Docker API
+     *
      * @param  string $query Query to call
      * @param  array  $args  Arguments to pass as an DELETE body
      */
@@ -80,9 +82,9 @@ class Docker
         $query = trim($query, '/');
 
         error_clear_last();
-        $context  = stream_context_create(['http' => ['method'  => 'DELETE']]);
+        $context  = stream_context_create(['http' => ['method' => 'DELETE']]);
         $response = @file_get_contents($this->api.'/'.$query, false, $context);
-        $e = error_get_last();
+        $e        = error_get_last();
         if (!empty($e)) {
             throw new \Exception("Can't do the [DELETE] call: {$e['message']}");
         }
@@ -101,6 +103,7 @@ class Docker
 
     /**
      * Return info about service / all services
+     *
      * @param  string|null $id Service name to get (if specified)
      */
     public function services(string $id = null)
@@ -114,19 +117,20 @@ class Docker
 
     /**
      * Return tasks for the service
+     *
      * @param  string       $serviceId   Service name
      * @param  bool|boolean $out_stopped If true, return stopped tasks too
      */
     public function serviceTasks(string $serviceId, bool $out_stopped = false)
     {
         $tasks = $this->get('/tasks', [
-            'service' => [ $serviceId ],
+            'service' => [$serviceId],
         ]);
 
         $ret = [];
         foreach ($tasks as $task) {
             if ($out_stopped || $task->Status->State === 'running') {
-                $ret []= $task;
+                $ret [] = $task;
             }
         }
 
@@ -135,6 +139,7 @@ class Docker
 
     /**
      * Create service
+     *
      * @param array $data Service specification, must conform to Docker Remote API structure
      */
     public function serviceCreate(array $data)
@@ -144,6 +149,7 @@ class Docker
 
     /**
      * Destroy service
+     *
      * @param string $id Id or name of the Service
      */
     public function serviceDelete($id)
@@ -154,6 +160,7 @@ class Docker
 
     /**
      * Return container "top" command results
+     *
      * @param string $containerId Id or name of container
      */
     public function containerTop(string $containerId)
@@ -171,19 +178,20 @@ class Docker
 
     /**
      * Execute simple command inside container
+     *
      * @param string $containerId Id or name of container
      * @param string $cmd         Command to execute
      */
     public function containerExec(string $containerId, string $cmd)
     {
-        $cmd = preg_split('/\s+/', $cmd);
+        $cmd  = preg_split('/\s+/', $cmd);
         $exec = $this->post(
             "/containers/{$containerId}/exec",
             [
-                "AttachStdin" => false,
+                "AttachStdin"  => false,
                 "AttachStdout" => true,
                 "AttachStderr" => true,
-                'Cmd' => $cmd
+                'Cmd'          => $cmd,
             ]
         );
 
@@ -193,7 +201,8 @@ class Docker
 
         $ret = $this->post('/exec/'.$exec->Id.'/start', [
             'Detach' => false,
-            'Tty' => true ]);
+            'Tty'    => true,
+        ]);
 
         $status = $this->get('/exec/'.$exec->Id.'/json');
         return $status->ExitCode === 0;
@@ -201,6 +210,7 @@ class Docker
 
     /**
      * Execute command on all containers (tasks) running service
+     *
      * @param string $serviceId Name of service
      * @param string $cmd       Command to execute
      */
@@ -217,7 +227,8 @@ class Docker
                 $node           = @$this->node($task->NodeID);
                 $container      = $task->Status->ContainerStatus->ContainerID;
                 $ret[$task->ID] = $node->containerExec($container, $cmd);
-            } catch (\Throwable $e) {
+            }
+            catch (\Throwable $e) {
                 $ret[$task->ID] = "Can not exec command: {$e->getMessage()}";
             }
         }
@@ -227,6 +238,7 @@ class Docker
 
     /**
      * Execute comman on all service running containers for a specified stack
+     *
      * @param  string $stackId   Stack Name
      * @param  string $serviceId Service Name in a stack
      * @param  string $cmd       Command to execute
@@ -238,6 +250,7 @@ class Docker
 
     /**
      * Removes service
+     *
      * @param  string $serviceId Service name to remove
      */
     public function serviceRemove(string $serviceId)
@@ -247,6 +260,7 @@ class Docker
 
     /**
      * Return instance of Docker for the specified node
+     *
      * @param string $nodeId Id of the node
      */
     public function node($nodeId)
@@ -257,7 +271,7 @@ class Docker
         }
 
         $host = "http://{$node->Status->Addr}:2375";
-        $ret = new self($host);
+        $ret  = new self($host);
         return $ret;
     }
 

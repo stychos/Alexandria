@@ -15,7 +15,7 @@ class smtp
     protected $connection;
     protected $localhost;
     protected $timeout = 30;
-    protected $logger  = null;
+    protected $logger = null;
 
     // auth
     protected $host;
@@ -26,20 +26,20 @@ class smtp
     protected $pass;
 
     // email
-    protected $to          = [];
-    protected $cc          = [];
-    protected $bcc         = [];
+    protected $to = [];
+    protected $cc = [];
+    protected $bcc = [];
     protected $from;
     protected $reply;
     protected $body;
     protected $text;
     protected $subject;
     protected $attachments = [];
-    protected $text_mode   = false;
+    protected $text_mode = false;
 
     // misc
-    protected $charset  = 'UTF-8';
-    protected $newline  = "\r\n";
+    protected $charset = 'UTF-8';
+    protected $newline = "\r\n";
     protected $encoding = '7bit';
     protected $wordwrap = 70;
 
@@ -155,10 +155,12 @@ class smtp
             // deliver the email
             if ($this->smtp_deliver()) {
                 $result = true;
-            } else {
+            }
+            else {
                 $result = false;
             }
-        } else {
+        }
+        else {
             $result = false;
         }
 
@@ -173,7 +175,7 @@ class smtp
     {
         // modify url, if needed
         if ($this->secure === 'ssl') {
-            $this->host = 'ssl://' . $this->host;
+            $this->host = 'ssl://'.$this->host;
         }
 
         // After each request we send to the SMTP server, we'll call the
@@ -190,7 +192,7 @@ class smtp
         }
 
         // request
-        $this->request(($this->auth ? 'EHLO' : 'HELO') . ' ' . $this->localhost . $this->newline);
+        $this->request(($this->auth ? 'EHLO' : 'HELO').' '.$this->localhost.$this->newline);
 
         // response
         $this->response();
@@ -198,7 +200,7 @@ class smtp
         // if tls required...
         if ($this->secure === 'tls') {
             // request
-            $this->request('STARTTLS' . $this->newline);
+            $this->request('STARTTLS'.$this->newline);
 
             // response
             if ($this->code() !== 220) {
@@ -209,7 +211,7 @@ class smtp
             stream_socket_enable_crypto($this->connection, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
 
             // request
-            $this->request(($this->auth ? 'EHLO' : 'HELO') . ' ' . $this->localhost . $this->newline);
+            $this->request(($this->auth ? 'EHLO' : 'HELO').' '.$this->localhost.$this->newline);
 
             // response
             if ($this->code() !== 250) {
@@ -220,7 +222,7 @@ class smtp
         // if auth required...
         if ($this->auth) {
             // request
-            $this->request('AUTH LOGIN' . $this->newline);
+            $this->request('AUTH LOGIN'.$this->newline);
 
             // response
             if ($this->code() !== 334) {
@@ -228,7 +230,7 @@ class smtp
             }
 
             // request
-            $this->request(base64_encode($this->user) . $this->newline);
+            $this->request(base64_encode($this->user).$this->newline);
 
             // response
             if ($this->code() !== 334) {
@@ -236,7 +238,7 @@ class smtp
             }
 
             // request
-            $this->request(base64_encode($this->pass) . $this->newline);
+            $this->request(base64_encode($this->pass).$this->newline);
 
             // response
             if ($this->code() !== 235) {
@@ -254,83 +256,85 @@ class smtp
         $boundary = md5(uniqid(time()));
 
         // add from info
-        $headers[] = 'From: ' . $this->format($this->from);
-        $headers[] = 'Reply-To: ' . $this->format($this->reply ? $this->reply : $this->from);
-        $headers[] = 'Subject: ' . $this->subject;
-        $headers[] = 'Date: ' . date('r');
+        $headers[] = 'From: '.$this->format($this->from);
+        $headers[] = 'Reply-To: '.$this->format($this->reply ? $this->reply : $this->from);
+        $headers[] = 'Subject: '.$this->subject;
+        $headers[] = 'Date: '.date('r');
 
         // add to receipients
         if (!empty($this->to)) {
             $string = '';
             foreach ($this->to as $r) {
-                $string .= $this->format($r) . ', ';
+                $string .= $this->format($r).', ';
             }
             $string    = substr($string, 0, -2);
-            $headers[] = 'To: ' . $string;
+            $headers[] = 'To: '.$string;
         }
 
         // add cc recipients
         if (!empty($this->cc)) {
             $string = '';
             foreach ($this->cc as $r) {
-                $string .= $this->format($r) . ', ';
+                $string .= $this->format($r).', ';
             }
             $string    = substr($string, 0, -2);
-            $headers[] = 'CC: ' . $string;
+            $headers[] = 'CC: '.$string;
         }
 
         // build email contents
         if (empty($this->attachments)) {
             if ($this->text_mode) {
                 // add text
-                $headers[] = 'Content-Type: text/plain; charset="' . $this->charset . '"';
-                $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
+                $headers[] = 'Content-Type: text/plain; charset="'.$this->charset.'"';
+                $headers[] = 'Content-Transfer-Encoding: '.$this->encoding;
                 $headers[] = '';
                 $headers[] = $this->text;
-            } else {
+            }
+            else {
                 // add multipart
                 $headers[] = 'MIME-Version: 1.0';
-                $headers[] = 'Content-Type: multipart/alternative; boundary="' . $boundary . '"';
+                $headers[] = 'Content-Type: multipart/alternative; boundary="'.$boundary.'"';
                 $headers[] = '';
                 $headers[] = 'This is a multi-part message in MIME format.';
-                $headers[] = '--' . $boundary;
+                $headers[] = '--'.$boundary;
 
                 // add text
-                $headers[] = 'Content-Type: text/plain; charset="' . $this->charset . '"';
-                $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
+                $headers[] = 'Content-Type: text/plain; charset="'.$this->charset.'"';
+                $headers[] = 'Content-Transfer-Encoding: '.$this->encoding;
                 $headers[] = '';
                 $headers[] = $this->text;
-                $headers[] = '--' . $boundary;
+                $headers[] = '--'.$boundary;
 
                 // add html
-                $headers[] = 'Content-Type: text/html; charset="' . $this->charset . '"';
-                $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
+                $headers[] = 'Content-Type: text/html; charset="'.$this->charset.'"';
+                $headers[] = 'Content-Transfer-Encoding: '.$this->encoding;
                 $headers[] = '';
                 $headers[] = $this->body;
-                $headers[] = '--' . $boundary . '--';
+                $headers[] = '--'.$boundary.'--';
             }
-        } else {
+        }
+        else {
             // add multipart
             $headers[] = 'MIME-Version: 1.0';
-            $headers[] = 'Content-Type: multipart/mixed; boundary="' . $boundary . '"';
+            $headers[] = 'Content-Type: multipart/mixed; boundary="'.$boundary.'"';
             $headers[] = '';
             $headers[] = 'This is a multi-part message in MIME format.';
-            $headers[] = '--' . $boundary;
+            $headers[] = '--'.$boundary;
 
             // add text
-            $headers[] = 'Content-Type: text/plain; charset="' . $this->charset . '"';
-            $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
+            $headers[] = 'Content-Type: text/plain; charset="'.$this->charset.'"';
+            $headers[] = 'Content-Transfer-Encoding: '.$this->encoding;
             $headers[] = '';
             $headers[] = $this->text;
-            $headers[] = '--' . $boundary;
+            $headers[] = '--'.$boundary;
 
             if (!$this->text_mode) {
                 // add html
-                $headers[] = 'Content-Type: text/html; charset="' . $this->charset . '"';
-                $headers[] = 'Content-Transfer-Encoding: ' . $this->encoding;
+                $headers[] = 'Content-Type: text/html; charset="'.$this->charset.'"';
+                $headers[] = 'Content-Transfer-Encoding: '.$this->encoding;
                 $headers[] = '';
                 $headers[] = $this->body;
-                $headers[] = '--' . $boundary;
+                $headers[] = '--'.$boundary;
             }
 
             // spin thru attachments...
@@ -346,13 +350,13 @@ class smtp
                         $contents = chunk_split(base64_encode($contents));
 
                         // add attachment
-                        $headers[] = 'Content-Type: application/octet-stream; name="' . basename($path) .
-                                     '"'; // use different content types here
+                        $headers[] = 'Content-Type: application/octet-stream; name="'.basename($path).
+                            '"'; // use different content types here
                         $headers[] = 'Content-Transfer-Encoding: base64';
                         $headers[] = 'Content-Disposition: attachment';
                         $headers[] = '';
                         $headers[] = $contents;
-                        $headers[] = '--' . $boundary;
+                        $headers[] = '--'.$boundary;
                     }
                 }
             }
@@ -367,7 +371,7 @@ class smtp
         // build headers string
         $email = '';
         foreach ($headers as $header) {
-            $email .= $header . $this->newline;
+            $email .= $header.$this->newline;
         }
 
         // return
@@ -377,7 +381,7 @@ class smtp
     protected function smtp_deliver()
     {
         // request
-        $this->request('MAIL FROM: <' . $this->from['email'] . '>' . $this->newline);
+        $this->request('MAIL FROM: <'.$this->from['email'].'>'.$this->newline);
 
         // response
         $this->response();
@@ -386,14 +390,14 @@ class smtp
         $recipients = array_merge($this->to, $this->cc, $this->bcc);
         foreach ($recipients as $r) {
             // request
-            $this->request('RCPT TO: <' . $r['email'] . '>' . $this->newline);
+            $this->request('RCPT TO: <'.$r['email'].'>'.$this->newline);
 
             // response
             $this->response();
         }
 
         // request
-        $this->request('DATA' . $this->newline);
+        $this->request('DATA'.$this->newline);
 
         // response
         $this->response();
@@ -408,7 +412,7 @@ class smtp
     protected function smtp_disconnect()
     {
         // request
-        $this->request('QUIT' . $this->newline);
+        $this->request('QUIT'.$this->newline);
 
         // response
         $this->response();
@@ -458,9 +462,10 @@ class smtp
     {
         // format "name <email>"
         if ($recipient['name']) {
-            return $recipient['name'] . ' <' . $recipient['email'] . '>';
-        } else {
-            return '<' . $recipient['email'] . '>';
+            return $recipient['name'].' <'.$recipient['email'].'>';
+        }
+        else {
+            return '<'.$recipient['email'].'>';
         }
     }
 
@@ -472,7 +477,7 @@ class smtp
         $content = '';
         foreach (explode("\n", $lines) as $line) {
             foreach (str_split($line, 998) as $result) {
-                $content .= $result . $this->newline;
+                $content .= $result.$this->newline;
             }
         }
 

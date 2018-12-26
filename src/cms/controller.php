@@ -15,19 +15,22 @@ class controller
             if ($classname == 'controller') {
                 $classname = $class[$count - 2];
             }
-        } else {
+        }
+        else {
             $classname = $class[0];
         }
 
         $action = cms::module('uri')->assoc($classname);
-        $arg = cms::module('uri')->assoc($action);
+        $arg    = cms::module('uri')->assoc($action);
         if (method_exists($this, $action)) {
             $this->$action($arg);
             cms::module('router')->stop();
-        } elseif (method_exists($this, 'main')) {
+        }
+        elseif (method_exists($this, 'main')) {
             $this->main();
             cms::module('router')->stop();
-        } else {
+        }
+        else {
             cms::module('router')->continue();
         }
     }
@@ -43,7 +46,7 @@ class controller
 
     public static function __widget()
     {
-        return get_called_class() . " widget";
+        return get_called_class()." widget";
     }
 
     protected function view(string $form, array $args = [])

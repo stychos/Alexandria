@@ -4,8 +4,8 @@ namespace alexandria\lib;
 
 class autoload
 {
-    protected $paths       = [];
-    protected $registered  = false;
+    protected $paths = [];
+    protected $registered = false;
     protected $ignore_case = true;
 
 
@@ -46,7 +46,7 @@ class autoload
     public function register(string $namespace = '', string $path = './'): bool
     {
         if (!file_exists($path)) {
-            $path = __DIR__ . '/../../' . $path;
+            $path = __DIR__.'/../../'.$path;
             if (!file_exists($path)) {
                 throw new \InvalidArgumentException("Autoload path not exist: '{$path}'");
             }
@@ -85,7 +85,8 @@ class autoload
 
         if (empty($path)) {
             unset($this->paths[$namespace]);
-        } else {
+        }
+        else {
             foreach ($this->paths[$namespace] as $i => $p) {
                 if ($p == $path) {
                     unset($this->paths[$namespace][$i]);
@@ -113,7 +114,7 @@ class autoload
     {
         $namespace = null;
         foreach ($this->paths as $ns => $path) {
-            if (!empty($ns) && stripos($class . "\\", $ns . "\\") !== false) {
+            if (!empty($ns) && stripos($class."\\", $ns."\\") !== false) {
                 if ($class !== $ns) {
                     $class = trim(str_ireplace($ns, '', $class), '\\');
                 }
@@ -127,7 +128,8 @@ class autoload
         $paths = [];
         if (!is_null($namespace)) {
             $paths = $this->paths[$namespace];
-        } elseif (isset($this->paths[''])) {
+        }
+        elseif (isset($this->paths[''])) {
             $paths = $this->paths[''];
         }
 
@@ -144,8 +146,10 @@ class autoload
                 $search [] = $subpath;
             }
 
-            if ($this->ignore_case
-                && strtolower($simplepath) !== $simplepath) {
+            if (
+                $this->ignore_case
+                && strtolower($simplepath) !== $simplepath
+            ) {
                 $search [] = strtolower($simplepath);
                 if ($class !== '') {
                     $search [] = strtolower($subpath);

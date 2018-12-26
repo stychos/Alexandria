@@ -27,7 +27,8 @@ class firewall
                 // rewrite aliases
                 if ($rule === 'all') {
                     $rule = '0.0.0.0/0';
-                } elseif ($rule === 'localhost') {
+                }
+                elseif ($rule === 'localhost') {
                     $rule = '127.0.0.1';
                 }
 

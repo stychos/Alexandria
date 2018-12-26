@@ -8,7 +8,7 @@ class security
 
     public function __construct(array $args = null)
     {
-        $this->crypt_key = $args['crypt_key'] ?? 'setS0m3r4nd0mKE_indacalLE3c()nFig!';
+        $this->crypt_key = $args['crypt_key'] ?? 'mzEMRrR/QqUwAy7sBc9YFRpI8mQ+l8Gc4SfaDMSoO3fxpa8hqQkkyiTj7zKLAKct7X6RF8MXMO3SkytAPzILLf8VP9vMEkdrZlFdXZSaadIQzbUu1Mp0ovxY/tjYd2Da';
     }
 
     public function set_key(string $key)
@@ -36,7 +36,7 @@ class security
         $iv    = openssl_random_pseudo_bytes($ivlen);
         $raw   = openssl_encrypt($data, $cipher, $this->crypt_key, $options = OPENSSL_RAW_DATA, $iv);
         $hmac  = hash_hmac('sha256', $raw, $this->crypt_key, $as_binary = true);
-        $ret   = base64_encode($iv . $hmac . $raw);
+        $ret   = base64_encode($iv.$hmac.$raw);
         return $ret;
     }
 

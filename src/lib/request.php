@@ -16,7 +16,8 @@ class request
         if (stripos(PHP_SAPI, 'CLI') !== false) {
             $this->method = 'CLI';
             $this->data   = $_SERVER['argv'];
-        } else {
+        }
+        else {
             $this->method = strtoupper($_SERVER['REQUEST_METHOD']);
             $this->data   = $this->method === 'GET'
                 ? $_SERVER['QUERY_STRING']
@@ -85,34 +86,42 @@ class request
     {
         return $this->method === 'CLI';
     }
+
     public function is_options(): bool
     {
         return $this->method === 'OPTIONS';
     }
+
     public function is_get(): bool
     {
         return $this->method === 'GET';
     }
+
     public function is_head(): bool
     {
         return $this->method === 'HEAD';
     }
+
     public function is_post(): bool
     {
         return $this->method === 'POST';
     }
+
     public function is_put(): bool
     {
         return $this->method === 'PUT';
     }
+
     public function is_delete(): bool
     {
         return $this->method === 'DELETE';
     }
+
     public function is_trace(): bool
     {
         return $this->method === 'TRACE';
     }
+
     public function is_connect(): bool
     {
         return $this->method === 'CONNECT';
@@ -159,7 +168,8 @@ class request
 
                     $headers[$key] = $value;
                 }
-            } elseif (isset($copy_server[$key])) {
+            }
+            elseif (isset($copy_server[$key])) {
                 $headers[$copy_server[$key]] = $value;
             }
         }
@@ -167,10 +177,12 @@ class request
         if (!isset($headers['Authorization'])) {
             if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
                 $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-            } elseif (isset($_SERVER['PHP_AUTH_USER'])) {
+            }
+            elseif (isset($_SERVER['PHP_AUTH_USER'])) {
                 $basic_pass               = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-                $headers['Authorization'] = 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $basic_pass);
-            } elseif (isset($_SERVER['PHP_AUTH_DIGEST'])) {
+                $headers['Authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$basic_pass);
+            }
+            elseif (isset($_SERVER['PHP_AUTH_DIGEST'])) {
                 $headers['Authorization'] = $_SERVER['PHP_AUTH_DIGEST'];
             }
         }

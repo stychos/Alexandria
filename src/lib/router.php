@@ -47,7 +47,7 @@ class router
                 $this->tail         = str_replace($original_route, '', $this->autoroute_path);
                 $this->tail         = trim(rtrim($this->tail, '/'), '/');
 
-                new $controller;
+                new $controller();
                 return true;
             }
         }
@@ -87,15 +87,17 @@ class router
 
                     // check if called controller has set router to continue auto-routing
                     if ($this->continue) {
-                        $routed = false;
+                        $routed         = false;
                         $this->continue = false;
-                    } else {
+                    }
+                    else {
                         break;
                     }
                 }
 
                 array_pop($path);
-            } while (!empty($path));
+            }
+            while (!empty($path));
         }
 
         if (!$use_fallback) {
@@ -139,7 +141,7 @@ class router
         $this->autoroute($use_fallbacks = false);
 
         if ($uri) {
-            $new_uri = rtrim($to, '/') . '/' . $this->tail;
+            $new_uri = rtrim($to, '/').'/'.$this->tail;
             $uri->build($new_uri);
         }
     }

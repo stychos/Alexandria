@@ -44,11 +44,14 @@ trait properties
         $cfg = $this->__properties[$property];
         if ($cfg & PROPERTY_BOOL) {
             return (bool) $value;
-        } elseif ($cfg & PROPERTY_INT) {
+        }
+        elseif ($cfg & PROPERTY_INT) {
             return (int) $value;
-        } elseif ($cfg & PROPERTY_FLOAT) {
+        }
+        elseif ($cfg & PROPERTY_FLOAT) {
             return (float) $value;
-        } elseif ($cfg & PROPERTY_STRING) {
+        }
+        elseif ($cfg & PROPERTY_STRING) {
             return (string) $value;
         }
 
@@ -61,7 +64,8 @@ trait properties
         foreach ($this->__properties as $property => $_) {
             if (isset($this->__defaults[$property])) {
                 $this->$property = $this->_cast($property, $this->__defaults[$property]);
-            } else {
+            }
+            else {
                 $this->$property = null;
             }
         }
@@ -82,7 +86,8 @@ trait properties
         foreach ($this->__properties as $property => $_) {
             if (isset($properties[$property])) {
                 $this->$property = $this->_cast($property, $properties[$property]);
-            } elseif (isset($this->__defaults[$property])) {
+            }
+            elseif (isset($this->__defaults[$property])) {
                 $this->$property = $this->_cast($property, $this->__defaults[$property]);
             }
         }
@@ -92,7 +97,7 @@ trait properties
 
     public function _data(): \stdClass
     {
-        $ret = new \stdClass;
+        $ret = new \stdClass();
         foreach ($this->__properties as $name => $v) {
             $ret->$name = $this->$name;
         }
@@ -104,14 +109,19 @@ trait properties
     {
         $trace = debug_backtrace();
 
-        if (isset($this->__properties[$property])
-            && ($this->__properties[$property] & PROPERTY_WRITEONLY)) {
+        if (
+            isset($this->__properties[$property])
+            && ($this->__properties[$property] & PROPERTY_WRITEONLY)
+        ) {
             $msg = sprintf('Cannot access writeonly property: %s::%s', $trace[0]['class'], $property);
             trigger_error($msg, E_USER_ERROR);
             return null;
-        } elseif (empty($this->__properties[$property]) ||
-                !($this->__properties[$property] & PROPERTY_READONLY ||
-                  $this->__properties[$property] & PROPERTY_READWRITE)) {
+        }
+        elseif (
+            empty($this->__properties[$property]) ||
+            !($this->__properties[$property] & PROPERTY_READONLY ||
+                $this->__properties[$property] & PROPERTY_READWRITE)
+        ) {
             $reflect    = new \ReflectionObject($this);
             $properties = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
 
@@ -134,16 +144,20 @@ trait properties
     public function __set($property, $value)
     {
         $trace = debug_backtrace();
-        if (!empty($this->__properties[$property]) &&
+        if (
+            !empty($this->__properties[$property]) &&
             ($this->__properties[$property] & PROPERTY_WRITEONLY ||
-             $this->__properties[$property] & PROPERTY_READWRITE)) {
+                $this->__properties[$property] & PROPERTY_READWRITE)
+        ) {
             $this->$property = $this->_cast($property, $value);
             return;
-        } elseif ($this->__properties[$property] & PROPERTY_READONLY) {
+        }
+        elseif ($this->__properties[$property] & PROPERTY_READONLY) {
             $msg = sprintf('Cannot write read-only property: %s::%s', $trace[0]['class'], $property);
             trigger_error($msg, E_USER_ERROR);
             return;
-        } else {
+        }
+        else {
             $reflect    = new \ReflectionObject($this);
             $properties = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
 

@@ -6,8 +6,9 @@ class str
 {
     /**
      * Adds 's' suffix for the nouns by the number
-     * @param  int    $number           [description]
-     * @param  string $single_variant   [description]
+     *
+     * @param  int    $number         [description]
+     * @param  string $single_variant [description]
      * @param  [type] $multiple_variant [description]
      * @return [type]                   [description]
      */
