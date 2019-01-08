@@ -55,7 +55,7 @@ class theme
         $this->entry  = $args->entry ?? 'theme.php';
         $this->appdir = $args->appdir ?? '';
 
-        $this->vars = [];
+        $this->vars = $args->vars ?? [];
         $this->prepare();
     }
 
@@ -84,11 +84,6 @@ class theme
         foreach ($vars as $name => $value) {
             $this->vars[$name] = $value;
         };
-    }
-
-    public function add_forms_path(string $path)
-    {
-        $this->appdirs [] = $path;
     }
 
     public function show_form(string $form, array $vars = [])
