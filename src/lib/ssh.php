@@ -22,13 +22,13 @@ class ssh
 
     public function __construct(array $args)
     {
-        $this->host    = $args['host']    ?? null;
-        $this->port    = $args['port']    ?? 22;
-        $this->user    = $args['user']    ?? 'root';
-        $this->pass    = $args['pass']    ?? null;
-        $this->pubkey  = $args['pubkey']  ?? null;
+        $this->host    = $args['host'] ?? null;
+        $this->port    = $args['port'] ?? 22;
+        $this->user    = $args['user'] ?? 'root';
+        $this->pass    = $args['pass'] ?? null;
+        $this->pubkey  = $args['pubkey'] ?? null;
         $this->privkey = $args['privkey'] ?? null;
-        $this->method  = $args['method']  ?? self::auth_pass;
+        $this->method  = $args['method'] ?? self::auth_pass;
     }
 
     public function connect()
@@ -43,7 +43,8 @@ class ssh
             if (!$res) {
                 throw new \Exception('Password autentication rejected by the server');
             }
-        } else {
+        }
+        else {
             $res = ssh2_auth_pubkey_file($this->connection, $this->user, $this->pubkey, $this->privkey, $this->pass);
             if (!$res) {
                 throw new \Exception('Autentication rejected by the server');
@@ -65,7 +66,7 @@ class ssh
         $stderr = ssh2_fetch_stream($stream, SSH2_STREAM_STDERR);
         stream_set_blocking($stream, true);
         stream_set_blocking($stderr, true);
-        $data = rtrim(stream_get_contents($stream));
+        $data   = rtrim(stream_get_contents($stream));
         $errors = rtrim(stream_get_contents($stderr));
         fclose($stream);
         fclose($stderr);

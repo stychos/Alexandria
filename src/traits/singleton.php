@@ -14,7 +14,7 @@ trait singleton
     {
         return isset(static::$__singleton)
             ? static::$__singleton
-            : static::$__singleton = new static;
+            : static::$__singleton = new static();
     }
 
     final private function __wakeup()

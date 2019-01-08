@@ -11,8 +11,7 @@ class pdo implements ddi
 
     public function __construct($args)
     {
-        if (empty($args['dsn']))
-        {
+        if (empty($args['dsn'])) {
             Throw new \RuntimeException('You must specify DSN for using database');
         }
 
@@ -32,28 +31,27 @@ class pdo implements ddi
 
     public function &query(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
     {
-        $query       = $this->trim($query);
-        $this->query = $query;
+        $query = $this->trim($query);
+        if (empty($mode)) {
+            $mode = self::result_object;
+        }
 
-        $stmt = $this->pdo->prepare($query);
-        if (!$stmt)
-        {
+        $this->query = $query;
+        $stmt        = $this->pdo->prepare($query);
+        if (!$stmt) {
             Throw new \RuntimeException("Error preparing statement: {$stmt->errorInfo()[0]}, {$stmt->errorInfo()[1]}. {$stmt->errorInfo()[2]}.");
         }
 
         $ret = $stmt->execute($args);
-        if (!$ret)
-        {
+        if (!$ret) {
             Throw new \RuntimeException("Error executing statement: {$stmt->errorInfo()[0]}, {$stmt->errorInfo()[1]}. {$stmt->errorInfo()[2]}.");
         }
 
-        if (!preg_match("/^\s*SELECT|SHOW|DESCRIBE|EXPLAIN/i", $query))
-        {
+        if (!preg_match("/^\s*SELECT|SHOW|DESCRIBE|EXPLAIN/i", $query)) {
             return $ret;
         }
 
-        switch ($mode)
-        {
+        switch ($mode) {
             case self::result_assoc:
                 $ret = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             break;
@@ -63,7 +61,7 @@ class pdo implements ddi
             break;
 
             case self::result_first:
-                $ret = $stmt->fetchObject();
+                $ret = $stmt->fetchObject($cast);
             break;
 
             case self::result_shot:
@@ -78,13 +76,11 @@ class pdo implements ddi
         return $ret;
     }
 
-    public function first(string $query, array $args = [], $mode = self::result_object)
+    public function first(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
     {
-        $ret = $this->query($query, $args, self::result_first);
-        if (is_object($ret))
-        {
-            switch ($mode)
-            {
+        $ret = $this->query($query, $args, self::result_first, $cast);
+        if (is_object($ret)) {
+            switch ($mode) {
                 case self::result_assoc:
                     $ret = (array) $ret;
                 break;

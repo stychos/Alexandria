@@ -15,7 +15,8 @@ class uploads
 
             if (!is_array($upvalue['name'])) {
                 $this->files [] = $upvalue;
-            } else {
+            }
+            else {
                 foreach ($upvalue['name'] as $index => $names) {
                     for ($i = 0; $i < count($names); $i++) {
                         $this->files[$upname][$index][] = [
@@ -50,11 +51,11 @@ class uploads
         }
 
         if (empty($filename)) {
-            $filename = uniqid() . preg_replace('/^.*(\.[^\.]+)$/', '\1', $this->files[$index]['name']);
+            $filename = uniqid().preg_replace('/^.*(\.[^\.]+)$/', '\1', $this->files[$index]['name']);
         }
 
-        if (move_uploaded_file($this->files[$index]['tmp_name'], $to . DIRECTORY_SEPARATOR . $filename)) {
-            chmod($to . DIRECTORY_SEPARATOR . $filename, $chmod);
+        if (move_uploaded_file($this->files[$index]['tmp_name'], $to.DIRECTORY_SEPARATOR.$filename)) {
+            chmod($to.DIRECTORY_SEPARATOR.$filename, $chmod);
             return $filename;
         }
 
