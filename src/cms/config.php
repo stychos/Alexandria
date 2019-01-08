@@ -4,7 +4,7 @@ namespace alexandria\cms;
 
 use alexandria\cms;
 
-class config
+class config extends cms
 {
     protected $data;
     protected $table = 'config';
