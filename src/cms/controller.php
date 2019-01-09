@@ -6,8 +6,19 @@ use alexandria\cms;
 
 class controller
 {
+    protected $request;
+    protected $uri;
+    protected $user;
+
+    /**
+     * @todo wrap output into the response module here
+     */
     public function __construct()
     {
+        $this->uri = cms::module('uri');
+        $this->request = cms::module('request');
+        $this->router = cms::module('router');
+
         $class = explode("\\", get_called_class());
         $count = count($class);
         if ($count > 1) {
@@ -20,18 +31,18 @@ class controller
             $classname = $class[0];
         }
 
-        $action = cms::module('uri')->assoc($classname);
-        $arg    = cms::module('uri')->assoc($action);
+        $action = $this->uri->assoc($classname);
+        $arg    = $this->uri->assoc($action);
         if (method_exists($this, $action)) {
             $this->$action($arg);
-            cms::module('router')->stop();
+            $this->router->stop();
         }
         elseif (method_exists($this, 'main')) {
             $this->main();
-            cms::module('router')->stop();
+            $this->router->stop();
         }
         else {
-            cms::module('router')->continue();
+            $this->router->continue();
         }
     }
 
@@ -51,10 +62,10 @@ class controller
 
     protected function view(string $form, array $args = [])
     {
-        return cms::module('theme')->show_form($form, $args);
+        return $this->theme->show_form($form, $args);
     }
 
-    protected function get(string $module, array $args = [], bool $new_instance = false)
+    protected function load(string $module, ?array $args = [], bool $new_instance = false)
     {
         $module = str_replace('/', '\\', $module);
         return cms::module($module, $args, $new_instance);
