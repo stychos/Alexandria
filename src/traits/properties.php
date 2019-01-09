@@ -267,6 +267,31 @@ trait properties
     }
 
     /**
+     * Fill declared properties from array or object
+     * @param  array|object $data data to fill into declared properties
+     * @return self
+     */
+    public function fill($data)
+    {
+        if (is_object($data)) {
+            $data = (array) $data;
+        }
+
+        if (is_array($data)) {
+            foreach ($data as $name => $value) {
+                if (isset($this->properties[$name])) {
+                    $cfg = $this->_property_parse($this->properties[$name]);
+                    $this->$name = $this->_property_cast($value, $cfg->type);
+                } else {
+                    $this->$name = $value;
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * Retreive all declared properties as object,
      * array- and object-typed properties returns serialized with JSON
      * @param  int       $json_flags Encode serializable properties with these JSON flags
