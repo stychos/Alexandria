@@ -1,4 +1,7 @@
 <?php
+
+namespace alexandria\traits;
+
 /**
  * Properties, reinforced
  */
