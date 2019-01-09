@@ -64,15 +64,20 @@ class cms
      * @return mixed
      * @throws \ReflectionException
      */
-    public static function module(string $module, array $args = [], bool $new_instance = false, bool $exception_on_fail = true)
+    public static function module(string $module, ?array $args = [], bool $new_instance = false, bool $exception_on_fail = true)
     {
+        $module = str_replace('/', '\\', $module);
         if (!empty(self::$cache[$module]) && !$new_instance) {
             return self::$cache[$module];
         }
 
         // Load config from starter if no variables passed
-        if (empty($args) && !empty(self::$config[$module])) {
-            $args = [self::$config[$module]];
+        if (empty($args)) {
+            if (empty(self::$config[$module])) {
+                $args = [];
+            } else {
+                $args = [self::$config[$module]];
+            }
         }
 
         // Priority: Local > CMS > Libraries
