@@ -20,7 +20,7 @@ trait properties
      *   int : 42
      *   readonly float : 25.625
      *   string writeonly : ' '
-     *   array : [1,2,3,4,5]
+     *   array readwrite default: [1,2,3,4,5]
      *
      * @param  string $config Property config to parse
      * @return object         Configuration object
@@ -31,10 +31,10 @@ trait properties
         $access  = null;
         $default = null;
 
-        $chunks = explode(' : ', $config);
-        $config = array_shift($chunks);
+        $chunks = explode(':', $config);
+        $config = trim(array_shift($chunks));
         if (count($chunks)) {
-            $default = implode(' : ', $chunks);
+            $default = implode(':', $chunks);
         }
 
         foreach (preg_split('~\s+~', $config) as $_) {
