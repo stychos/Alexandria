@@ -1,180 +1,291 @@
 <?php
 /**
- * Getters, Setters, Properties
+ * Properties, reinforced
  */
-
-namespace alexandria\traits;
-
-define('PROPERTY_PRIVATE', 0);
-define('PROPERTY_READWRITE', 1);
-define('PROPERTY_READONLY', 2);
-define('PROPERTY_WRITEONLY', 4);
-
-define('PROPERTY_RAW', 0);
-define('PROPERTY_BOOL', 16);
-define('PROPERTY_INT', 32);
-define('PROPERTY_FLOAT', 64);
-define('PROPERTY_STRING', 128);
 
 trait properties
 {
-    protected $__properties;
-    protected $__defaults;
-
-    protected function __properties(array $properties = [])
+    /**
+     * Parse property declaration into the property configuration object
+     *
+     * Declaration keys are: type, access and default property value
+     * Property declaration keywords separated by the whitespaces
+     * Default property value must be an evaluable expression after the colon
+     * Everything after the first colon is meant to be the default value (if present)
+     *
+     * For example:
+     *   int : 42
+     *   readonly float : 25.625
+     *   string writeonly : ' '
+     *   array : [1,2,3,4,5]
+     *
+     * @param  string $config Property config to parse
+     * @return object         Configuration object
+     */
+    protected function _property_parse(string $config)
     {
-        foreach ($properties as $name => $params) {
-            $this->__properties[$name] = $params;
-        }
-    }
+        $type    = null;
+        $access  = null;
+        $default = null;
 
-    protected function __defaults(array $properties = [])
-    {
-        foreach ($properties as $name => $value) {
-            $this->__defaults[$name] = $value;
-        }
-    }
-
-    protected function _cast(string $property, $value, $null_on_fail = false)
-    {
-        if (empty($this->__properties[$property])) {
-            return $null_on_fail ? null : $value;
+        $chunks = explode(' : ', $config);
+        $config = array_shift($chunks);
+        if (count($chunks)) {
+            $default = implode(' : ', $chunks);
         }
 
-        $cfg = $this->__properties[$property];
-        if ($cfg & PROPERTY_BOOL) {
-            return (bool) $value;
-        }
-        elseif ($cfg & PROPERTY_INT) {
-            return (int) $value;
-        }
-        elseif ($cfg & PROPERTY_FLOAT) {
-            return (float) $value;
-        }
-        elseif ($cfg & PROPERTY_STRING) {
-            return (string) $value;
-        }
-
-        // untyped property, return as is
-        return $value;
-    }
-
-    protected function _clear()
-    {
-        foreach ($this->__properties as $property => $_) {
-            if (isset($this->__defaults[$property])) {
-                $this->$property = $this->_cast($property, $this->__defaults[$property]);
-            }
-            else {
-                $this->$property = null;
+        foreach (preg_split('~\s+~', $config) as $_) {
+            $chunk = strtolower($_);
+            if (in_array($chunk, [
+                'bool', 'boolean', 'int', 'integer',
+                'float', 'double', 'string',
+                'array', 'object',
+            ])) {
+                $type = $chunk;
+            } elseif (in_array($chunk, [
+                'readonly', 'readwrite', 'writeonly',
+            ])) {
+                $access = $chunk;
             }
         }
 
-        return $this;
+        if (!empty($default)) {
+            $tmp = null;
+            if ($type == 'array') {
+                try {
+                    $tmp = eval("return {$default};");
+                } catch (\throwable $e) {
+                    $tmp = json_decode($default, JSON_OBJECT_AS_ARRAY);
+                }
+
+                if (is_null($tmp)) {
+                    $tmp = [];
+                }
+                $default = $tmp;
+            } elseif ($type == 'object') {
+                try {
+                    $tmp = eval("return {$default};");
+                } catch (\throwable $e) {
+                    $tmp = json_decode($default);
+                }
+
+                if (is_null($tmp)) {
+                    $tmp = new \stdClass;
+                }
+                $default = $tmp;
+            } else {
+                $default = $this->_property_cast($default, $type);
+            }
+        }
+
+        return (object) [
+            'type'    => $type,
+            'access'  => $access,
+            'default' => $default,
+        ];
     }
 
-    protected function _fill($properties = [])
+    /**
+     * Cast variable into the target type if possible
+     *
+     * @param  mixed      $value  Variable to cast
+     * @param  string     $type   Target type
+     * @return mixed|null         Returns translated variable or null
+     */
+    protected function _property_cast($value, string $type = null)
     {
-        if (is_object($properties)) {
-            $properties = (array) $properties;
-        }
+        $ret = null;
 
-        if (!is_array($properties)) {
-            throw new \InvalidArgumentException("_fill() can accept arrays or objects only");
-        }
+        switch ($type) {
+            case 'bool':
+            case 'boolean':
+                if (is_scalar($value)) {
+                    $ret = (bool) $value;
+                }
+            break;
 
-        foreach ($this->__properties as $property => $_) {
-            if (isset($properties[$property])) {
-                $this->$property = $this->_cast($property, $properties[$property]);
-            }
-            elseif (isset($this->__defaults[$property])) {
-                $this->$property = $this->_cast($property, $this->__defaults[$property]);
-            }
-        }
+            case 'int':
+            case 'integer':
+                if (is_scalar($value)) {
+                    $ret = (int) $value;
+                }
+            break;
 
-        return $this;
-    }
+            case 'float':
+            case 'double':
+                if (is_scalar($value)) {
+                    $ret = (float) $value;
+                }
+            break;
 
-    public function _data(): \stdClass
-    {
-        $ret = new \stdClass();
-        foreach ($this->__properties as $name => $v) {
-            $ret->$name = $this->$name;
+            case 'string':
+                if (is_scalar($value)) {
+                    $ret = (string) $value;
+                }
+            break;
+
+            case 'array':
+                if (is_array($value)) {
+                    $ret = $value;
+                } elseif (is_object($value)) {
+                    $ret = (array) $value;
+                } elseif (is_string($value)) {
+                    $ret = json_decode($value, JSON_OBJECT_AS_ARRAY);
+                }
+
+                if (is_null($ret)) {
+                    $ret = [];
+                }
+            break;
+
+            case 'object':
+                if (is_object($value)) {
+                    $ret = $value;
+                } elseif (is_array($value)) {
+                    $ret = (object) $value;
+                } elseif (is_string($value)) {
+                    $ret = json_decode($value);
+                }
+
+                if (is_null($ret)) {
+                    $ret = new \stdClass;
+                }
+            break;
+
+            default:
+                $ret = $value;
+            break;
         }
 
         return $ret;
     }
 
-    public function __get($property)
+    /**
+     * Magic method to check if property is declared in class
+     * @param  string  $name Property name to check
+     * @return boolean       True if property is declared, otherwise false
+     */
+    public function __isset($name): bool
     {
-        $trace = debug_backtrace();
+        $reflect    = new \ReflectionObject($this);
+        $properties = $reflect->getProperties();
 
-        if (
-            isset($this->__properties[$property])
-            && ($this->__properties[$property] & PROPERTY_WRITEONLY)
-        ) {
-            $msg = sprintf('Cannot access writeonly property: %s::%s', $trace[0]['class'], $property);
-            trigger_error($msg, E_USER_ERROR);
-            return null;
+        foreach ($properties as $_) {
+            if ($name === $_->getName()) {
+                return true;
+            }
         }
-        elseif (
-            empty($this->__properties[$property]) ||
-            !($this->__properties[$property] & PROPERTY_READONLY ||
-                $this->__properties[$property] & PROPERTY_READWRITE)
-        ) {
+
+        return false;
+    }
+
+    /**
+     * Magic method to get properties according to configuration specs
+     * @param  string $name Property name
+     * @return mixed        Returns property value or it's default value (if configured and current is null)
+     */
+    public function __get($name)
+    {
+        $class = __CLASS__;
+
+        // called property not in configured list
+        if (!isset($this->properties[$name])) {
             $reflect    = new \ReflectionObject($this);
             $properties = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
 
-            foreach ($properties as $p) {
-                if ($p->getName() === $property) {
-                    $msg = sprintf('Cannot access protected property: %s::%s', $trace[0]['class'], $property);
-                    trigger_error($msg, E_USER_ERROR);
+            foreach ($properties as $_) {
+                if ($name === $_->getName()) {
+                    trigger_error("Cannot access protected property: {$class}::{$name}", E_USER_ERROR);
                     return null;
                 }
             }
 
-            $msg = sprintf('Undefined property: %s::%s', $trace[0]['class'], $property);
-            trigger_error($msg, E_USER_NOTICE);
+            trigger_error("Undefined property: {$class}::{$name}", E_USER_NOTICE);
             return null;
         }
 
-        return $this->_cast($property, $this->$property);
+        // property is configured, check for the writeonly flag
+        $cfg = $this->_property_parse($this->properties[$name]);
+        if ($cfg->access == 'writeonly') {
+            trigger_error("Cannot access writeonly property: {$class}::{$name}", E_USER_ERROR);
+            return null;
+        }
+
+        // cast to configured type
+        if (is_null($this->$name) && !is_null($cfg->default)) {
+            $this->$name = $cfg->default;
+        }
+
+        return $this->$name;
     }
 
-    public function __set($property, $value)
+    /**
+     * Magic method to set properties declared as writeable
+     * @param string $name   Property name to set
+     * @param mixed  $value  Value to set
+     */
+    public function __set($name, $value)
     {
-        $trace = debug_backtrace();
-        if (
-            !empty($this->__properties[$property]) &&
-            ($this->__properties[$property] & PROPERTY_WRITEONLY ||
-                $this->__properties[$property] & PROPERTY_READWRITE)
-        ) {
-            $this->$property = $this->_cast($property, $value);
-            return;
-        }
-        elseif ($this->__properties[$property] & PROPERTY_READONLY) {
-            $msg = sprintf('Cannot write read-only property: %s::%s', $trace[0]['class'], $property);
-            trigger_error($msg, E_USER_ERROR);
-            return;
-        }
-        else {
+        $class = __CLASS__;
+        if (isset($this->properties[$name])) {
+            $cfg = $this->_property_parse($this->properties[$name]);
+            if ($cfg->access == 'readonly') {
+                trigger_error("Cannot write read-only property: {$class}::{$name}", E_USER_ERROR);
+                return;
+            }
+
+            $this->$name = $this->_property_cast($value, $cfg->type);
+        } else {
             $reflect    = new \ReflectionObject($this);
             $properties = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
 
-            foreach ($properties as $p) {
-                if ($p->getName() === $property) {
-                    $msg = sprintf('Cannot write protected property: %s::%s', $trace[0]['class'], $property);
-                    trigger_error($msg, E_USER_ERROR);
+            foreach ($properties as $_) {
+                if ($name === $_->getName()) {
+                    trigger_error("Cannot write protected name: {$class}::{$name}", E_USER_ERROR);
                     return;
                 }
             }
-        }
 
-        $this->$property = $this->_cast($property, $value);
+            $this->$name = $value;
+        }
     }
 
-    public function __isset($property): bool
+    /**
+     * Clean all declared properties
+     * @return self
+     */
+    public function clean()
     {
-        return isset($this->$property);
+        foreach ($this->properties as $name => $_) {
+            $this->$name = null;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Retreive all declared properties as object,
+     * array- and object-typed properties returns serialized with JSON
+     * @param  int       $json_flags Encode serializable properties with these JSON flags
+     * @return \stdClass
+     */
+    public function data(int $json_flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT): \stdClass
+    {
+        $ret = new \stdClass;
+        foreach ($this->properties as $name => $_) {
+            $cfg   = $this->_property_parse($_);
+            $value = $this->$name;
+            if (is_null($value) && $cfg->default) {
+                $value = $cfg->default;
+            }
+
+            if (in_array($cfg->type, ['array', 'object'])) {
+                $ret->$name = json_encode($value, $json_flags);
+            } else {
+                $ret->$name = $value;
+            }
+        }
+
+        return $ret;
     }
 }
