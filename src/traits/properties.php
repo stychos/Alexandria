@@ -58,7 +58,10 @@ trait properties
                 try {
                     $tmp = eval("return {$default};");
                 } catch (\throwable $e) {
-                    $tmp = json_decode($default, JSON_OBJECT_AS_ARRAY);
+                    $tmp = json_decode($default);
+                    if (is_object($tmp)) {
+                        $tmp = (array) $tmp;
+                    }
                 }
 
                 if (is_null($tmp)) {
