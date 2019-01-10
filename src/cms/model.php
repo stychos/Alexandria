@@ -137,7 +137,9 @@ class model
         foreach ($fields as $field => $value) {
             preg_match('~^(?<operator>[!><=^\~])?\s?(?<value>.+)~', $value, $matches);
             $operator = $matches['operator'] ?? '=';
-            if ($operator == '^') {
+            if (empty($operator)) {
+                $operator = '=';
+            } elseif ($operator == '^') {
                 $operator = 'LIKE';
             } elseif ($operator == '~') {
                 $operator = 'RLIKE';
@@ -173,6 +175,7 @@ class model
             $sql .= "LIMIT {$limit} ";
         }
 
+        var_dump($sql, $qmasks);
         $ret = $db->query($sql, $qmasks);
         return $ret;
     }
