@@ -175,7 +175,6 @@ class model
             $sql .= "LIMIT {$limit} ";
         }
 
-        var_dump($sql, $qmasks);
         $ret = $db->query($sql, $qmasks);
         return $ret;
     }
