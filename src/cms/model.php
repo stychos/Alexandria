@@ -175,7 +175,11 @@ class model
             $sql .= "LIMIT {$limit} ";
         }
 
-        $ret = $db->query($sql, $qmasks);
+        $data = $db->query($sql, $qmasks);
+        foreach ($data as $item) {
+            $ret []= new static($item);
+        }
+
         return $ret;
     }
 
