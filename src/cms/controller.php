@@ -6,8 +6,11 @@ use alexandria\cms;
 
 class controller
 {
-    protected $request;
     protected $uri;
+    protected $request;
+    protected $http;
+    protected $router;
+    protected $theme;
     protected $user;
 
     /**
@@ -15,9 +18,11 @@ class controller
      */
     public function __construct()
     {
-        $this->uri = cms::module('uri');
+        $this->uri     = cms::module('uri');
         $this->request = cms::module('request');
-        $this->router = cms::module('router');
+        $this->router  = cms::module('router');
+        $this->theme   = cms::module('theme');
+        $this->http    = cms::module('http');
 
         $class = explode("\\", get_called_class());
         $count = count($class);
