@@ -115,6 +115,9 @@ trait properties
                 if (is_scalar($value)) {
                     $ret = (int) $value;
                 }
+                if (is_null($ret)) {
+                    $ret = 0;
+                }
             break;
 
             case 'float':
@@ -122,11 +125,17 @@ trait properties
                 if (is_scalar($value)) {
                     $ret = (float) $value;
                 }
+                if (is_null($ret)) {
+                    $ret = 0.0;
+                }
             break;
 
             case 'string':
                 if (is_scalar($value)) {
                     $ret = (string) $value;
+                }
+                if (is_null($ret)) {
+                    $ret = '';
                 }
             break;
 
@@ -190,7 +199,7 @@ trait properties
      * @param  string $name Property name
      * @return mixed        Returns property value or it's default value (if configured and current is null)
      */
-    public function __get($name)
+    public function &__get($name)
     {
         $class = __CLASS__;
 
@@ -218,11 +227,11 @@ trait properties
         }
 
         // cast to configured type
-        if (is_null($this->$name) && !is_null($cfg->default)) {
-            $this->$name = $cfg->default;
+        if (is_null($this->{$name})) {
+            $this->{$name} = @$this->_property_cast(null, $this->properties[$name]);
         }
 
-        return $this->$name;
+        return $this->{$name};
     }
 
     /**
@@ -240,7 +249,7 @@ trait properties
                 return;
             }
 
-            $this->$name = $this->_property_cast($value, $cfg->type);
+            $this->{$name} = $this->_property_cast($value, $cfg->type);
         } else {
             $reflect    = new \ReflectionObject($this);
             $properties = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
@@ -252,7 +261,7 @@ trait properties
                 }
             }
 
-            $this->$name = $value;
+            $this->{$name} = $value;
         }
     }
 
@@ -263,7 +272,7 @@ trait properties
     public function clean()
     {
         foreach ($this->properties as $name => $_) {
-            $this->$name = null;
+            $this->{$name} = null;
         }
 
         return $this;
@@ -284,9 +293,9 @@ trait properties
             foreach ($data as $name => $value) {
                 if (isset($this->properties[$name])) {
                     $cfg = $this->_property_parse($this->properties[$name]);
-                    $this->$name = $this->_property_cast($value, $cfg->type);
+                    $this->{$name} = $this->_property_cast($value, $cfg->type);
                 } else {
-                    $this->$name = $value;
+                    $this->{$name} = $value;
                 }
             }
         }
@@ -305,7 +314,7 @@ trait properties
         $ret = new \stdClass;
         foreach ($this->properties as $name => $_) {
             $cfg   = $this->_property_parse($_);
-            $value = $this->$name;
+            $value = $this->{$name};
             if (is_null($value) && $cfg->default) {
                 $value = $cfg->default;
             }
