@@ -136,7 +136,7 @@ trait properties
                 } elseif (is_object($value)) {
                     $ret = (array) $value;
                 } elseif (is_string($value)) {
-                    $ret = json_decode($value, JSON_OBJECT_AS_ARRAY);
+                    $ret = (array) json_decode($value);
                 }
 
                 if (is_null($ret)) {
