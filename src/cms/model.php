@@ -34,7 +34,7 @@ class model
         $data = $this->data();
 
         // new record
-        if (empty($this->id_field)) {
+        if (empty($this->{$this->id_field})) {
             $query = "INSERT INTO `{$this->table}` SET ";
             foreach ($this->properties as $name => $_) {
                 if ($name == $this->id_field) {
@@ -48,7 +48,7 @@ class model
             $query = preg_replace('~\, $~', '', $query); // fix last comma
             $ret = $this->db->query($query, $vars);
             if ($ret && $this->id_autoincrement) {
-                $this->$id_field = $this->db->id();
+                $this->{$this->id_field} = $this->db->id();
             }
         }
 
@@ -56,16 +56,11 @@ class model
         else {
             $query = "UPDATE `{$this->table}` SET ";
             foreach ($this->properties as $name => $_) {
-                if ($name == $this->id_field) {
-                    continue;
-                }
-
                 $query .= "`{$name}` = :{$name}, ";
                 $vars[":{$name}"] = $data->$name;
             }
 
             $query = preg_replace('~\, $~', ' ', $query); // fix last comma
-
             $query .= "WHERE `{$this->id_field}` = :id";
             $vars[':id'] = $data->{$this->id_field};
 
