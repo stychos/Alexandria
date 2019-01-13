@@ -3,6 +3,7 @@
 namespace alexandria\cms;
 
 use alexandria\cms;
+use user\auth;
 
 class controller
 {
@@ -23,6 +24,10 @@ class controller
         $this->router  = cms::module('router');
         $this->theme   = cms::module('theme');
         $this->http    = cms::module('http');
+        $this->user    = auth::user();
+        $this->theme->add_vars([
+            'user' => $this->user,
+        ]);
 
         $class = explode("\\", get_called_class());
         $count = count($class);
