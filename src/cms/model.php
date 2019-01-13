@@ -153,7 +153,11 @@ class model
         $order = $params['order'] ?? null;
         if ($order) {
             if (is_scalar($order)) {
-                $sql .= "ORDER BY `{$order}` ";
+                preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $order, $matches);
+                $direction = $matches['direction'] ?? 'asc';
+                $direction = strtoupper($direction);
+                $field = $matches['field'] ?? $_;
+                $sql .= "ORDER BY `{$field}` {$direction}, ";
             } elseif (is_iterable($order)) {
                 $sql .= "ORDER BY ";
                 foreach ($order as $_) {
