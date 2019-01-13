@@ -34,7 +34,7 @@ class model
         $data = $this->data();
 
         // new record
-        if (empty($this->{$this->id_field})) {
+        if (empty($data->{$this->id_field})) {
             $query = "INSERT INTO `{$this->table}` SET ";
             foreach ($this->properties as $name => $_) {
                 if ($name == $this->id_field) {
@@ -98,16 +98,18 @@ class model
      * = equal
      * ! not equal
      * < less than
+     * <= less or equal than
      * > greater than
+     * >= greater or equal
      * ^ match with LIKE
      * ~ match with RLIKE
      */
     public static function find($arg1, $arg2 = null, array $arg3 = []): array
     {
-        $did   = new static;
-        $table = $did->table;
-        $db    = $did->db;
-        unset($did);
+        $static = new static;
+        $table  = $static->table;
+        $db     = $static->db;
+        unset($static);
 
         $ret = [];
         $sql = "SELECT * FROM `{$table}` WHERE ";
@@ -130,7 +132,8 @@ class model
         }
 
         foreach ($fields as $field => $value) {
-            preg_match('~^(?<operator>[!><=^\~])?\s?(?<value>.+)~', $value, $matches);
+            $value = str_replace('~', '\~', $value);
+            preg_match('~^(?<operator>!|>=?|<=?|=|^|\~)?\s?(?<value>.+)~', $value, $matches);
             $operator = $matches['operator'] ?? '=';
             if (empty($operator)) {
                 $operator = '=';
@@ -193,5 +196,22 @@ class model
 
         $data = self::find($fields, $params);
         return $data[0] ?? false;
+    }
+
+    public static function all()
+    {
+        $static = new static;
+        $table  = $static->table;
+        $db     = $static->db;
+        unset($static);
+
+        $ret = [];
+        $sql = "SELECT * FROM `{$table}`";
+        $data = $db->query($sql);
+        foreach ($data as $item) {
+            $ret []= new static($item);
+        }
+
+        return $ret;
     }
 }
