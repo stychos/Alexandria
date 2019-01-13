@@ -9,6 +9,12 @@ namespace alexandria\traits;
 trait properties
 {
     /**
+     * Keeps properties data
+     * @var array $_properties
+     */
+    protected $_properties;
+
+    /**
      * Parse property declaration into the property configuration object
      *
      * Declaration keys are: type, access and default property value
@@ -182,9 +188,12 @@ trait properties
      */
     public function __isset($name): bool
     {
+        if (isset($this->_properties[$name])) {
+            return true;
+        }
+
         $reflect    = new \ReflectionObject($this);
         $properties = $reflect->getProperties();
-
         foreach ($properties as $_) {
             if ($name === $_->getName()) {
                 return true;
@@ -227,11 +236,11 @@ trait properties
         }
 
         // cast to configured type
-        if (is_null($this->{$name})) {
-            $this->{$name} = @$this->_property_cast(null, $this->properties[$name]);
+        if (is_null($this->_properties[$name])) {
+            $this->_properties[$name] = @$this->_property_cast(null, $this->properties[$name]);
         }
 
-        return $this->{$name};
+        return $this->_properties[$name];
     }
 
     /**
@@ -249,7 +258,7 @@ trait properties
                 return;
             }
 
-            $this->{$name} = $this->_property_cast($value, $cfg->type);
+            $this->_properties[$name] = $this->_property_cast($value, $cfg->type);
         } else {
             $reflect    = new \ReflectionObject($this);
             $properties = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
@@ -272,7 +281,7 @@ trait properties
     public function clean()
     {
         foreach ($this->properties as $name => $_) {
-            $this->{$name} = null;
+            $this->_properties[$name] = null;
         }
 
         return $this;
@@ -293,7 +302,7 @@ trait properties
             foreach ($data as $name => $value) {
                 if (isset($this->properties[$name])) {
                     $cfg = $this->_property_parse($this->properties[$name]);
-                    $this->{$name} = $this->_property_cast($value, $cfg->type);
+                    $this->_properties[$name] = $this->_property_cast($value, $cfg->type);
                 } else {
                     $this->{$name} = $value;
                 }
@@ -314,7 +323,7 @@ trait properties
         $ret = new \stdClass;
         foreach ($this->properties as $name => $_) {
             $cfg   = $this->_property_parse($_);
-            $value = $this->{$name};
+            $value = $this->_properties[$name];
             if (is_null($value) && $cfg->default) {
                 $value = $cfg->default;
             }
