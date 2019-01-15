@@ -48,7 +48,9 @@ class model
             $query = preg_replace('~\, $~', '', $query); // fix last comma
             $ret = $this->db->query($query, $vars);
             if ($ret && $this->id_autoincrement) {
-                $this->{$this->id_field} = $this->db->id();
+                $this->fill([
+                    $this->id_field => $this->db->id(),
+                ]);
             }
         }
 
@@ -132,8 +134,7 @@ class model
         }
 
         foreach ($fields as $field => $value) {
-            $value = str_replace('~', '\~', $value);
-            preg_match('~^(?<operator>!|>=?|<=?|=|^|\~)?\s?(?<value>.+)~', $value, $matches);
+            preg_match('#^(?<operator>!|>=?|<=?|=|\~|\^)?\s?(?<value>.+)#', $value, $matches);
             $operator = $matches['operator'] ?? '=';
             if (empty($operator)) {
                 $operator = '=';
@@ -172,8 +173,7 @@ class model
         }
 
         $limit = $params['limit'] ?? null;
-        if ($limit
-        && (is_numeric($limit) || preg_match('~^\s*\d+(\,\s*\d+)?\s*$~', $limit))) {
+        if (is_numeric($limit) || preg_match('~^\s*\d+(\,\s*\d+)?\s*$~', $limit)) {
             $sql .= "LIMIT {$limit} ";
         }
 
@@ -216,6 +216,51 @@ class model
             $ret []= new static($item);
         }
 
+        return $ret;
+    }
+
+    public static function count($arg1, $arg2 = null)
+    {
+        $static = new static;
+        $table  = $static->table;
+        $db     = $static->db;
+        unset($static);
+
+        $sql = "SELECT COUNT(*) FROM `{$table}` WHERE ";
+        $fields = null;
+        $qmasks = null;
+
+        // if field passed as scalar with value in the second argument and params in the third
+        if (is_scalar($arg1) && is_scalar($arg2)) {
+            $fields = [ $arg1 => $arg2 ];
+        }
+
+        // filds-values passed as array and params in the second argument
+        elseif (is_array($arg1) && !empty($arg1)) {
+            $fields = $arg1;
+        } else {
+            return [];
+        }
+
+        foreach ($fields as $field => $value) {
+            preg_match('#^(?<operator>!|>=?|<=?|=|\~|\^)?\s?(?<value>.+)#', $value, $matches);
+            $operator = $matches['operator'] ?? '=';
+            if (empty($operator)) {
+                $operator = '=';
+            } elseif ($operator == '^') {
+                $operator = 'LIKE';
+            } elseif ($operator == '~') {
+                $operator = 'RLIKE';
+            }
+
+            $value = $matches['value'] ?? $value;
+
+            $qmasks[":{$field}"] = $value;
+            $sql .= "`{$field}` {$operator} :{$field} AND ";
+        }
+        $sql = preg_replace('~ AND $~', ' ', $sql);
+
+        $ret = $db->shot($sql, $qmasks);
         return $ret;
     }
 }
