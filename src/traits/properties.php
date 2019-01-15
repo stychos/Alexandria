@@ -121,9 +121,6 @@ trait properties
                 if (is_scalar($value)) {
                     $ret = (int) $value;
                 }
-                if (is_null($ret)) {
-                    $ret = 0;
-                }
             break;
 
             case 'float':
@@ -131,17 +128,11 @@ trait properties
                 if (is_scalar($value)) {
                     $ret = (float) $value;
                 }
-                if (is_null($ret)) {
-                    $ret = 0.0;
-                }
             break;
 
             case 'string':
                 if (is_scalar($value)) {
                     $ret = (string) $value;
-                }
-                if (is_null($ret)) {
-                    $ret = '';
                 }
             break;
 
