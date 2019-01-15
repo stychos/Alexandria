@@ -323,9 +323,18 @@ trait properties
         $ret = new \stdClass;
         foreach ($this->properties as $name => $_) {
             $cfg   = $this->_property_parse($_);
-            $value = $this->_properties[$name];
-            if (is_null($value) && $cfg->default) {
-                $value = $cfg->default;
+            $value = $this->_properties[$name] ?? null;
+
+            if (is_null($value)) {
+                if (!is_null($cfg->default)) {
+                    $value = $cfg->default;
+                } else {
+                    if ($cfg->type == 'array') {
+                        $value = [];
+                    } elseif ($cfg->type == 'object') {
+                        $value = new \stdClass;
+                    }
+                }
             }
 
             if (in_array($cfg->type, ['array', 'object'])) {
