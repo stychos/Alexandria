@@ -83,7 +83,7 @@ class model
         return $ret;
     }
 
-    public static function table()
+    public static function table(): string
     {
         return (new static)->table;
     }
@@ -105,6 +105,8 @@ class model
      * >= greater or equal
      * ^ match with LIKE
      * ~ match with RLIKE
+     * 
+     * @return static[]
      */
     public static function find($arg1, $arg2 = null, array $arg3 = []): array
     {
