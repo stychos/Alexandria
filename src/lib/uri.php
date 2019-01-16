@@ -23,24 +23,29 @@ class uri
 
     public function build(string $uri = null, array $cli_vars = [])
     {
-        if (stripos(PHP_SAPI, 'CLI') !== false) {
+        if (stripos(PHP_SAPI, 'CLI') !== false)
+        {
             $trace        = debug_backtrace();
             $this->subdir = dirname($_SERVER['PHP_SELF']);
-            if ($this->subdir === '.') {
+            if ($this->subdir === '.')
+            {
                 $this->subdir = '';
             }
 
             $this->docroot     = dirname($trace[count($trace) - 1]['file']);
             $this->raw_docroot = rtrim(str_replace($this->subdir, '', $this->docroot), '/');
 
-            if (!empty($uri)) {
+            if (!empty($uri))
+            {
                 $this->uri = $uri;
             }
-            else {
+            else
+            {
                 $k   = 0;
                 $uri = '';
                 array_shift($_SERVER['argv']);
-                while (isset($_SERVER['argv'][$k])) {
+                while (isset($_SERVER['argv'][$k]))
+                {
                     $element = str_replace('/', '^^S^^', $_SERVER['argv'][$k]);
                     $uri     .= $element.'/';
                     $k++;
@@ -55,19 +60,20 @@ class uri
 
             $this->uri_array     = explode('/', $this->uri);
             $this->raw_uri_array = explode('/', $this->raw_uri);
-            foreach ($this->uri_array as &$item) {
+            foreach ($this->uri_array as &$item)
+            {
                 $item = str_replace('^^S^^', '/', $item);
             }
             unset($item);
-            foreach ($this->raw_uri_array as &$item) {
+            foreach ($this->raw_uri_array as &$item)
+            {
                 $item = str_replace('^^S^^', '/', $item);
             }
             unset($item);
         }
-        else {
-            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' || isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443')
-                ? 'https://'
-                : 'http://';
+        else
+        {
+            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' || isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443') ? 'https://' : 'http://';
 
             $this->raw_docroot = $_SERVER['DOCUMENT_ROOT'];
             $this->raw_wwwroot = $scheme.$_SERVER['HTTP_HOST'];
@@ -92,16 +98,16 @@ class uri
     public function index(int $index, bool $raw = false)
     {
         $keys = $raw ? $this->raw_uri_array : $this->uri_array;
-        return isset($keys[$index])
-            ? $keys[$index]
-            : false;
+        return isset($keys[$index]) ? $keys[$index] : false;
     }
 
     public function exists(string $key, bool $raw = false)
     {
         $keys = $raw ? $this->raw_uri_array : $this->uri_array;
-        foreach ($keys as $i => $k) {
-            if ($k === $key) {
+        foreach ($keys as $i => $k)
+        {
+            if ($k === $key)
+            {
                 return true;
             }
         }
@@ -111,17 +117,18 @@ class uri
 
     public function assoc(string $key = null, bool $raw = false)
     {
-        if (empty($key)) {
+        if (empty($key))
+        {
             return false;
         }
 
         $ret  = false;
         $keys = $raw ? $this->raw_uri_array : $this->uri_array;
-        foreach ($keys as $i => $k) {
-            if ($k === $key) {
-                $ret = isset($keys[$i + 1])
-                    ? $keys[$i + 1]
-                    : '';
+        foreach ($keys as $i => $k)
+        {
+            if ($k === $key)
+            {
+                $ret = isset($keys[$i + 1]) ? $keys[$i + 1] : '';
 
                 break;
             }
@@ -129,9 +136,9 @@ class uri
 
         // on cli mode, return only mtched values (skip --args)
         if (
-            stripos(PHP_SAPI, 'CLI') !== false
-            && strpos($ret, '--') === 0
-        ) {
+            stripos(PHP_SAPI, 'CLI') !== false && strpos($ret, '--') === 0
+        )
+        {
             $ret = '';
         }
 
@@ -140,30 +147,25 @@ class uri
 
     public function all(bool $raw = false): string
     {
-        return $raw
-            ? $this->raw_uri
-            : $this->uri;
+        return $raw ? $this->raw_uri : $this->uri;
     }
 
     public function to(string $path = '/', bool $raw = false): string
     {
         $path = trim(rtrim($path, '/'), '/');
-        return $raw
-            ? "{$this->raw_wwwroot}/{$path}"
-            : "{$this->wwwroot}/{$path}";
+        return $raw ? "{$this->raw_wwwroot}/{$path}" : "{$this->wwwroot}/{$path}";
     }
 
     public function path(string $path = '/', bool $raw = false): string
     {
         $path = trim(rtrim($path, '/'), '/');
-        return $raw
-            ? "{$this->raw_docroot}/{$path}"
-            : "{$this->docroot}/{$path}";
+        return $raw ? "{$this->raw_docroot}/{$path}" : "{$this->docroot}/{$path}";
     }
 
     public function add_aliases(array $aliases = [])
     {
-        foreach ($aliases as $from => $to) {
+        foreach ($aliases as $from => $to)
+        {
             $this->aliases[$from] = $to;
         }
     }

@@ -23,33 +23,40 @@ class cms
     {
         self::$config = $config;
 
-        if (empty(self::$config['router'])) {
+        if (empty(self::$config['router']))
+        {
             return;
         }
 
         // Pathinfo fix (on empty path nginx dont create this cgi variable)
-        if (!isset($_SERVER['PATH_INFO'])) {
+        if (!isset($_SERVER['PATH_INFO']))
+        {
             $_SERVER['PATH_INFO'] = '';
         }
 
-        if (!empty(self::$config['router']['path_rewrites'])) {
+        if (!empty(self::$config['router']['path_rewrites']))
+        {
             self::module('uri')->add_aliases(self::$config['router']['path_rewrites']);
         }
 
-        if (!stristr(PHP_SAPI, 'cli')) {
+        if (!stristr(PHP_SAPI, 'cli'))
+        {
             self::module('theme');
         }
 
-        if (empty(self::$config['router']['autoroute_path'])) {
+        if (empty(self::$config['router']['autoroute_path']))
+        {
             self::$config['router']['autoroute_path'] = self::module('uri')->all();
         }
 
         self::module('router', [self::$config['router']]);
-        if (!empty(self::$config['router']['autoroute'])) {
+        if (!empty(self::$config['router']['autoroute']))
+        {
             self::module('router')->autoroute();
         }
 
-        if (!stristr(PHP_SAPI, 'cli')) {
+        if (!stristr(PHP_SAPI, 'cli'))
+        {
             return self::module('theme')->render();
         }
     }
@@ -67,15 +74,20 @@ class cms
     public static function module(string $module, ?array $args = [], bool $new_instance = false, bool $exception_on_fail = true)
     {
         $module = str_replace('/', '\\', $module);
-        if (!empty(self::$cache[$module]) && !$new_instance) {
+        if (!empty(self::$cache[$module]) && !$new_instance)
+        {
             return self::$cache[$module];
         }
 
         // Load config from starter if no variables passed
-        if (empty($args)) {
-            if (empty(self::$config[$module])) {
+        if (empty($args))
+        {
+            if (empty(self::$config[$module]))
+            {
                 $args = [];
-            } else {
+            }
+            else
+            {
                 $args = [self::$config[$module]];
             }
         }
@@ -88,15 +100,18 @@ class cms
             'alexandria\\lib\\'.$module,
         ];
 
-        foreach ($try as $class) {
-            if (class_exists($class)) {
+        foreach ($try as $class)
+        {
+            if (class_exists($class))
+            {
                 $reflect              = new \ReflectionClass($class);
                 self::$cache[$module] = $reflect->newInstanceArgs($args);
                 return self::$cache[$module];
             }
         }
 
-        if ($exception_on_fail) {
+        if ($exception_on_fail)
+        {
             throw new \RuntimeException("Can not find module {$module}.");
         }
     }

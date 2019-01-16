@@ -34,19 +34,24 @@ class ssh
     public function connect()
     {
         $this->connection = ssh2_connect($this->host, $this->port);
-        if (!$this->connection) {
+        if (!$this->connection)
+        {
             throw new \Exception('Can not initialize connection to server');
         }
 
-        if ($this->method == self::auth_pass) {
+        if ($this->method == self::auth_pass)
+        {
             $res = ssh2_auth_password($this->connection, $this->user, $this->pass);
-            if (!$res) {
+            if (!$res)
+            {
                 throw new \Exception('Password autentication rejected by the server');
             }
         }
-        else {
+        else
+        {
             $res = ssh2_auth_pubkey_file($this->connection, $this->user, $this->pubkey, $this->privkey, $this->pass);
-            if (!$res) {
+            if (!$res)
+            {
                 throw new \Exception('Autentication rejected by the server');
             }
         }
@@ -54,12 +59,14 @@ class ssh
 
     public function exec($cmd)
     {
-        if (!$this->connection) {
+        if (!$this->connection)
+        {
             $this->connect();
         }
 
         $stream = ssh2_exec($this->connection, $cmd);
-        if (!$stream) {
+        if (!$stream)
+        {
             throw new \Exception('SSH command failed');
         }
 
@@ -71,14 +78,13 @@ class ssh
         fclose($stream);
         fclose($stderr);
 
-        return empty($data)
-            ? $errors
-            : $data;
+        return empty($data) ? $errors : $data;
     }
 
     public function disconnect()
     {
-        if ($this->connection) {
+        if ($this->connection)
+        {
             $this->exec('exit');
         }
 

@@ -15,7 +15,8 @@ class str
     public static function numstr(int $number, string $noun)
     {
         $ret = "{$number} {$noun}";
-        if ($number % 10 != 1) {
+        if ($number % 10 != 1)
+        {
             $ret .= 's';
         }
 

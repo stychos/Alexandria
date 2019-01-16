@@ -8,6 +8,7 @@
 namespace alexandria\cms;
 
 use alexandria\cms;
+use alexandria\lib\form;
 
 /**
  * Theme CMS Library
@@ -28,7 +29,8 @@ class theme
 
     public function __construct($args = null)
     {
-        if (is_array($args)) {
+        if (is_array($args))
+        {
             $args = (object) $args;
         }
 
@@ -68,7 +70,8 @@ class theme
 
     public function prepare()
     {
-        if (!$this->started) {
+        if (!$this->started)
+        {
             ob_start();
             $this->started = true;
         }
@@ -76,7 +79,8 @@ class theme
 
     public function add_vars(array $vars)
     {
-        foreach ($vars as $name => $value) {
+        foreach ($vars as $name => $value)
+        {
             $this->vars[$name] = $value;
         };
     }
@@ -88,21 +92,27 @@ class theme
 
     public function load_form(string $form, array $vars = [])
     {
-        if ($this->appdir && strpos($form, '/') !== false) {
+        if ($this->appdir && strpos($form, '/') !== false)
+        {
             $tform    = preg_replace('~/([^/]+)$~', '/forms/$1', $form);
             $filename = "{$this->appdir}/{$tform}.php";
-            if (file_exists($filename)) {
-                return \alexandria\lib\form::load($filename, $vars);
+            if (file_exists($filename))
+            {
+                return form::load($filename, $vars);
             }
         }
 
-        foreach ([
-                     "{$this->theme}/forms",
-                     "{$this->root}/forms",
-                 ] as $dir) {
+        foreach (
+            [
+                "{$this->theme}/forms",
+                "{$this->root}/forms",
+            ] as $dir
+        )
+        {
             $filename = "{$dir}/{$form}.php";
-            if (file_exists($filename)) {
-                return \alexandria\lib\form::load($filename, $vars);
+            if (file_exists($filename))
+            {
+                return form::load($filename, $vars);
             }
         }
 
@@ -111,11 +121,13 @@ class theme
 
     public function render(): string
     {
-        if (!file_exists("{$this->theme}/{$this->entry}")) {
+        if (!file_exists("{$this->theme}/{$this->entry}"))
+        {
             throw new \RuntimeException("Theme file not found: {$this->theme}/{$this->entry}");
         }
 
-        if (!$this->started) {
+        if (!$this->started)
+        {
             throw new \RuntimeException("Theme buffer was not started, nothing to render.");
         }
 
@@ -127,7 +139,8 @@ class theme
         require "{$this->theme}/{$this->entry}";
         $render = ob_get_clean();
 
-        if (strpos($render, '{content}') === false) {
+        if (strpos($render, '{content}') === false)
+        {
             throw new \RuntimeException('Theme has no {content} section.');
         }
 
@@ -138,14 +151,18 @@ class theme
         // Assigned variables
         $matches = null;
         preg_match_all('/\{\$(?<var>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
-        if (!empty($matches['var'])) {
-            foreach ($matches['var'] as $index => $name) {
+        if (!empty($matches['var']))
+        {
+            foreach ($matches['var'] as $index => $name)
+            {
                 $src = $matches[0][$index];
                 $val = $this->vars[$name] ?? null;
-                if (!empty($val) && is_scalar($val)) {
+                if (!empty($val) && is_scalar($val))
+                {
                     $render = str_replace($src, htmlspecialchars($val), $render);
                 }
-                else {
+                else
+                {
                     $var    = preg_replace('~\{\$(.+)\}~', '$1', $src);
                     $esrc   = addslashes($src);
                     $cmd    = "return \${$var} ?? '{$esrc}';";
@@ -157,8 +174,10 @@ class theme
 
         // Ret-Evaluations
         preg_match_all('/<=\s*(?<eval>.+)=>/u', $render, $matches);
-        if (!empty($matches[0])) {
-            foreach ($matches['eval'] as $index => $cmd) {
+        if (!empty($matches[0]))
+        {
+            foreach ($matches['eval'] as $index => $cmd)
+            {
                 $src    = $matches[0][$index];
                 $val    = eval("return {$cmd};");
                 $render = str_replace($src, htmlspecialchars($val), $render);
@@ -168,13 +187,17 @@ class theme
         // Widgets
         $matches = null;
         preg_match_all('/\{\{[a-zA-Z_\x7f-\xff][\\a-zA-Z0-9_\x7f-\xff\/]*\}\}/', $render, $matches);
-        if (!empty($matches[0])) {
-            foreach ($matches[0] as $name) {
+        if (!empty($matches[0]))
+        {
+            foreach ($matches[0] as $name)
+            {
                 $var = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
                 $var = str_replace('/', '\\', $var);
 
-                foreach ([$var, "{$var}\\controller"] as $controller) {
-                    if (method_exists($controller, '__widget')) {
+                foreach ([$var, "{$var}\\controller"] as $controller)
+                {
+                    if (method_exists($controller, '__widget'))
+                    {
                         $to     = $controller::__widget();
                         $to     = str_replace('{theme}', $this->wtheme, $to);
                         $to     = str_replace('{root}', $this->wroot, $to);
@@ -188,13 +211,13 @@ class theme
         // Config variables
         $matches = null;
         preg_match_all('/\{\[[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\]\}/', $render, $matches);
-        if (!empty($matches[0])) {
-            foreach ($matches[0] as $name) {
+        if (!empty($matches[0]))
+        {
+            foreach ($matches[0] as $name)
+            {
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
                 $val    = cms::module('config')->$var;
-                $render = !empty($val) && is_scalar($val)
-                    ? str_replace($name, $val, $render)
-                    : str_replace($name, '', $render);
+                $render = !empty($val) && is_scalar($val) ? str_replace($name, $val, $render) : str_replace($name, '', $render);
             }
         }
 
@@ -203,7 +226,8 @@ class theme
 
     public function __destruct()
     {
-        if ($this->started) {
+        if ($this->started)
+        {
             ob_end_flush();
         }
     }

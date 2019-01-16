@@ -16,14 +16,15 @@ class model
 
     public function __construct($data = null)
     {
-        $this->db = cms::module('db');
+        $this->db         = cms::module('db');
         $this->properties = $this->properties ?? [];
 
-        $path = explode('\\', get_called_class());
-        $class = array_pop($path);
+        $path        = explode('\\', get_called_class());
+        $class       = array_pop($path);
         $this->table = $this->table ?? strtolower($class).'s';
 
-        if (is_object($data) || is_array($data)) {
+        if (is_object($data) || is_array($data))
+        {
             $this->fill($data);
         }
     }
@@ -34,20 +35,24 @@ class model
         $data = $this->data();
 
         // new record
-        if (empty($data->{$this->id_field})) {
+        if (empty($data->{$this->id_field}))
+        {
             $query = "INSERT INTO `{$this->table}` SET ";
-            foreach ($this->properties as $name => $_) {
-                if ($name == $this->id_field) {
+            foreach ($this->properties as $name => $_)
+            {
+                if ($name == $this->id_field)
+                {
                     continue;
                 }
 
-                $query .= "`{$name}` = :{$name}, ";
+                $query            .= "`{$name}` = :{$name}, ";
                 $vars[":{$name}"] = $data->$name;
             }
 
             $query = preg_replace('~\, $~', '', $query); // fix last comma
-            $ret = $this->db->query($query, $vars);
-            if ($ret && $this->id_autoincrement) {
+            $ret   = $this->db->query($query, $vars);
+            if ($ret && $this->id_autoincrement)
+            {
                 $this->fill([
                     $this->id_field => $this->db->id(),
                 ]);
@@ -55,15 +60,17 @@ class model
         }
 
         // update exist record
-        else {
+        else
+        {
             $query = "UPDATE `{$this->table}` SET ";
-            foreach ($this->properties as $name => $_) {
-                $query .= "`{$name}` = :{$name}, ";
+            foreach ($this->properties as $name => $_)
+            {
+                $query            .= "`{$name}` = :{$name}, ";
                 $vars[":{$name}"] = $data->$name;
             }
 
-            $query = preg_replace('~\, $~', ' ', $query); // fix last comma
-            $query .= "WHERE `{$this->id_field}` = :id";
+            $query       = preg_replace('~\, $~', ' ', $query); // fix last comma
+            $query       .= "WHERE `{$this->id_field}` = :id";
             $vars[':id'] = $data->{$this->id_field};
 
             $ret = $this->db->query($query, $vars);
@@ -75,17 +82,18 @@ class model
     public function delete()
     {
         $data = $this->data();
-        $ret = $this->db->query("
+        $ret  = $this->db->query("
             DELETE FROM `{$this->table}`
             WHERE `{$this->id_field}` = :id", [
-                ':id' => $data->{$this->id_field} ]);
+            ':id' => $data->{$this->id_field},
+        ]);
 
         return $ret;
     }
 
     public static function table(): string
     {
-        return (new static)->table;
+        return (new static())->table;
     }
 
     /**
@@ -105,12 +113,12 @@ class model
      * >= greater or equal
      * ^ match with LIKE
      * ~ match with RLIKE
-     * 
+     *
      * @return static[]
      */
     public static function find($arg1, $arg2 = null, array $arg3 = []): array
     {
-        $static = new static;
+        $static = new static();
         $table  = $static->table;
         $db     = $static->db;
         unset($static);
@@ -122,66 +130,83 @@ class model
         $qmasks = null;
 
         // if field passed as scalar with value in the second argument and params in the third
-        if (is_scalar($arg1) && is_scalar($arg2)) {
-            $fields = [ $arg1 => $arg2 ];
+        if (is_scalar($arg1) && is_scalar($arg2))
+        {
+            $fields = [$arg1 => $arg2];
             $params = $arg3;
         }
 
         // filds-values passed as array and params in the second argument
-        elseif (is_array($arg1) && !empty($arg1)) {
+        elseif (is_array($arg1) && !empty($arg1))
+        {
             $fields = $arg1;
             $params = is_array($arg2) ? $arg2 : [];
-        } else {
+        }
+        else
+        {
             return [];
         }
 
-        foreach ($fields as $field => $value) {
+        foreach ($fields as $field => $value)
+        {
             preg_match('#^(?<operator>!|>=?|<=?|=|\~|\^)?\s?(?<value>.+)#', $value, $matches);
             $operator = $matches['operator'] ?? '=';
-            if (empty($operator)) {
+            if (empty($operator))
+            {
                 $operator = '=';
-            } elseif ($operator == '^') {
+            }
+            elseif ($operator == '^')
+            {
                 $operator = 'LIKE';
-            } elseif ($operator == '~') {
+            }
+            elseif ($operator == '~')
+            {
                 $operator = 'RLIKE';
             }
 
             $value = $matches['value'] ?? $value;
 
             $qmasks[":{$field}"] = $value;
-            $sql .= "`{$field}` {$operator} :{$field} AND ";
+            $sql                 .= "`{$field}` {$operator} :{$field} AND ";
         }
         $sql = preg_replace('~ AND $~', ' ', $sql);
 
         $order = $params['order'] ?? null;
-        if ($order) {
-            if (is_scalar($order)) {
+        if ($order)
+        {
+            if (is_scalar($order))
+            {
                 preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $order, $matches);
                 $direction = $matches['direction'] ?? 'asc';
                 $direction = strtoupper($direction);
-                $field = $matches['field'] ?? $_;
-                $sql .= "ORDER BY `{$field}` {$direction}, ";
-            } elseif (is_iterable($order)) {
+                $field     = $matches['field'] ?? $_;
+                $sql       .= "ORDER BY `{$field}` {$direction}, ";
+            }
+            elseif (is_iterable($order))
+            {
                 $sql .= "ORDER BY ";
-                foreach ($order as $_) {
+                foreach ($order as $_)
+                {
                     preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $_, $matches);
                     $direction = $matches['direction'] ?? 'asc';
                     $direction = strtoupper($direction);
-                    $field = $matches['field'] ?? $_;
-                    $sql .= "`{$field}` {$direction}, ";
+                    $field     = $matches['field'] ?? $_;
+                    $sql       .= "`{$field}` {$direction}, ";
                 }
             }
             $sql = preg_replace('~\, $~', ' ', $sql);
         }
 
         $limit = $params['limit'] ?? null;
-        if (is_numeric($limit) || preg_match('~^\s*\d+(\,\s*\d+)?\s*$~', $limit)) {
+        if (is_numeric($limit) || preg_match('~^\s*\d+(\,\s*\d+)?\s*$~', $limit))
+        {
             $sql .= "LIMIT {$limit} ";
         }
 
         $data = $db->query($sql, $qmasks);
-        foreach ($data as $item) {
-            $ret []= new static($item);
+        foreach ($data as $item)
+        {
+            $ret [] = new static($item);
         }
 
         return $ret;
@@ -190,13 +215,18 @@ class model
     public static function get($arg1, $arg2 = null)
     {
         $fields = null;
-        $params = [ 'limit' => 1 ];
+        $params = ['limit' => 1];
 
-        if (is_scalar($arg1) && is_scalar($arg2)) {
-            $fields = [ $arg1 => $arg2 ];
-        } elseif (is_array($arg1) && !empty($arg1)) {
+        if (is_scalar($arg1) && is_scalar($arg2))
+        {
+            $fields = [$arg1 => $arg2];
+        }
+        elseif (is_array($arg1) && !empty($arg1))
+        {
             $fields = $arg1;
-        } else {
+        }
+        else
+        {
             return false;
         }
 
@@ -206,16 +236,17 @@ class model
 
     public static function all()
     {
-        $static = new static;
+        $static = new static();
         $table  = $static->table;
         $db     = $static->db;
         unset($static);
 
-        $ret = [];
-        $sql = "SELECT * FROM `{$table}`";
+        $ret  = [];
+        $sql  = "SELECT * FROM `{$table}`";
         $data = $db->query($sql);
-        foreach ($data as $item) {
-            $ret []= new static($item);
+        foreach ($data as $item)
+        {
+            $ret [] = new static($item);
         }
 
         return $ret;
@@ -223,42 +254,52 @@ class model
 
     public static function count($arg1, $arg2 = null)
     {
-        $static = new static;
+        $static = new static();
         $table  = $static->table;
         $db     = $static->db;
         unset($static);
 
-        $sql = "SELECT COUNT(*) FROM `{$table}` WHERE ";
+        $sql    = "SELECT COUNT(*) FROM `{$table}` WHERE ";
         $fields = null;
         $qmasks = null;
 
         // if field passed as scalar with value in the second argument and params in the third
-        if (is_scalar($arg1) && is_scalar($arg2)) {
-            $fields = [ $arg1 => $arg2 ];
+        if (is_scalar($arg1) && is_scalar($arg2))
+        {
+            $fields = [$arg1 => $arg2];
         }
 
         // filds-values passed as array and params in the second argument
-        elseif (is_array($arg1) && !empty($arg1)) {
+        elseif (is_array($arg1) && !empty($arg1))
+        {
             $fields = $arg1;
-        } else {
+        }
+        else
+        {
             return [];
         }
 
-        foreach ($fields as $field => $value) {
+        foreach ($fields as $field => $value)
+        {
             preg_match('#^(?<operator>!|>=?|<=?|=|\~|\^)?\s?(?<value>.+)#', $value, $matches);
             $operator = $matches['operator'] ?? '=';
-            if (empty($operator)) {
+            if (empty($operator))
+            {
                 $operator = '=';
-            } elseif ($operator == '^') {
+            }
+            elseif ($operator == '^')
+            {
                 $operator = 'LIKE';
-            } elseif ($operator == '~') {
+            }
+            elseif ($operator == '~')
+            {
                 $operator = 'RLIKE';
             }
 
             $value = $matches['value'] ?? $value;
 
             $qmasks[":{$field}"] = $value;
-            $sql .= "`{$field}` {$operator} :{$field} AND ";
+            $sql                 .= "`{$field}` {$operator} :{$field} AND ";
         }
         $sql = preg_replace('~ AND $~', ' ', $sql);
 

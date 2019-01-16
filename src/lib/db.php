@@ -22,19 +22,23 @@ class db
             'time'    => 0,
         ];
 
-        if (is_object($args)) {
+        if (is_object($args))
+        {
             $args = (array) $args;
         }
 
-        if (empty($args['driver'])) {
+        if (empty($args['driver']))
+        {
             throw new \InvalidArgumentException('Driver can not be empty.');
         }
 
-        try {
+        try
+        {
             $reflect      = new \ReflectionClass(__NAMESPACE__.'\\db\\drivers\\'.$args['driver']);
             $this->driver = $reflect->newInstance($args);
         }
-        catch (\Exception $e) {
+        catch (\Exception $e)
+        {
             throw new \RuntimeException("Driver error: {$e->getMessage()}");
         }
 

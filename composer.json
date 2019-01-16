@@ -1,20 +1,20 @@
 {
-    "name": "iloveyou/alexandria",
-    "description": "Alexandria Bike",
-    "type": "library",
-    "license": "WTFPL",
-    "authors": [
-        {
-            "name": "iloveYou",
-            "email": "i@blackrabbit.info"
-        }
-    ],
-    "require": {
-        "php": ">= 7.1"
-    },
-    "autoload": {
-        "psr-4": {
-            "alexandria\\": "src/"
-        }
+  "name": "iloveyou/alexandria",
+  "description": "Alexandria Bike",
+  "type": "library",
+  "license": "WTFPL",
+  "authors": [
+    {
+      "name": "iloveYou",
+      "email": "i@blackrabbit.info"
     }
+  ],
+  "require": {
+    "php": ">= 7.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "alexandria\\": "src/"
+    }
+  }
 }

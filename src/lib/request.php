@@ -13,15 +13,15 @@ class request
 
     public function __construct()
     {
-        if (stripos(PHP_SAPI, 'CLI') !== false) {
+        if (stripos(PHP_SAPI, 'CLI') !== false)
+        {
             $this->method = 'CLI';
             $this->data   = $_SERVER['argv'];
         }
-        else {
+        else
+        {
             $this->method = strtoupper($_SERVER['REQUEST_METHOD']);
-            $this->data   = $this->method === 'GET'
-                ? $_SERVER['QUERY_STRING']
-                : file_get_contents('php://input');
+            $this->data   = $this->method === 'GET' ? $_SERVER['QUERY_STRING'] : file_get_contents('php://input');
         }
     }
 
@@ -39,7 +39,8 @@ class request
      */
     public function get_headers(): array
     {
-        if (empty($this->headers)) {
+        if (empty($this->headers))
+        {
             $this->headers = $this->parse_headers();
         }
 
@@ -56,7 +57,8 @@ class request
      */
     public function get_header(string $name)
     {
-        if (empty($this->headers)) {
+        if (empty($this->headers))
+        {
             $this->headers = $this->parse_headers();
         }
 
@@ -137,7 +139,8 @@ class request
      */
     public function on(string $method, callable $callback)
     {
-        if (strtoupper($method) == $this->method) {
+        if (strtoupper($method) == $this->method)
+        {
             return $callback($this->data);
         }
     }
@@ -157,10 +160,13 @@ class request
             'CONTENT_MD5'    => 'Content-Md5',
         ];
 
-        foreach ($_SERVER as $key => $value) {
-            if (substr($key, 0, 5) === 'HTTP_') {
+        foreach ($_SERVER as $key => $value)
+        {
+            if (substr($key, 0, 5) === 'HTTP_')
+            {
                 $key = substr($key, 5);
-                if (!isset($copy_server[$key]) || !isset($_SERVER[$key])) {
+                if (!isset($copy_server[$key]) || !isset($_SERVER[$key]))
+                {
                     $key = str_replace('_', ' ', $key);
                     $key = strtolower($key);
                     $key = ucwords($key);
@@ -169,20 +175,25 @@ class request
                     $headers[$key] = $value;
                 }
             }
-            elseif (isset($copy_server[$key])) {
+            elseif (isset($copy_server[$key]))
+            {
                 $headers[$copy_server[$key]] = $value;
             }
         }
 
-        if (!isset($headers['Authorization'])) {
-            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        if (!isset($headers['Authorization']))
+        {
+            if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']))
+            {
                 $headers['Authorization'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
             }
-            elseif (isset($_SERVER['PHP_AUTH_USER'])) {
+            elseif (isset($_SERVER['PHP_AUTH_USER']))
+            {
                 $basic_pass               = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
                 $headers['Authorization'] = 'Basic '.base64_encode($_SERVER['PHP_AUTH_USER'].':'.$basic_pass);
             }
-            elseif (isset($_SERVER['PHP_AUTH_DIGEST'])) {
+            elseif (isset($_SERVER['PHP_AUTH_DIGEST']))
+            {
                 $headers['Authorization'] = $_SERVER['PHP_AUTH_DIGEST'];
             }
         }

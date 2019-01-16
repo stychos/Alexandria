@@ -24,17 +24,17 @@ class Docker
     public function get(string $query, array $filters = [])
     {
         $query = trim($query, '/');
-        if (!empty($filters)) {
+        if (!empty($filters))
+        {
             $filters = http_build_query(['filters' => json_encode($filters)]);
-            $query   .= strpos($query, '?') === false
-                ? '?'.$filters
-                : '&'.$filters;
+            $query   .= strpos($query, '?') === false ? '?'.$filters : '&'.$filters;
         }
 
         error_clear_last();
         $response = @file_get_contents($this->api.'/'.$query);
         $e        = error_get_last();
-        if (!empty($e)) {
+        if (!empty($e))
+        {
             throw new \Exception("Can't do the [GET] call: {$e['message']}");
         }
 
@@ -63,7 +63,8 @@ class Docker
         $context  = stream_context_create($options);
         $response = @file_get_contents($this->api.'/'.$query, false, $context);
         $e        = error_get_last();
-        if (!empty($e)) {
+        if (!empty($e))
+        {
             throw new \Exception("Can't do the [POST] call: {$e['message']}");
         }
 
@@ -85,7 +86,8 @@ class Docker
         $context  = stream_context_create(['http' => ['method' => 'DELETE']]);
         $response = @file_get_contents($this->api.'/'.$query, false, $context);
         $e        = error_get_last();
-        if (!empty($e)) {
+        if (!empty($e))
+        {
             throw new \Exception("Can't do the [DELETE] call: {$e['message']}");
         }
 
@@ -108,7 +110,8 @@ class Docker
      */
     public function services(string $id = null)
     {
-        if (!empty($id)) {
+        if (!empty($id))
+        {
             $id = '/'.$id;
         }
 
@@ -128,8 +131,10 @@ class Docker
         ]);
 
         $ret = [];
-        foreach ($tasks as $task) {
-            if ($out_stopped || $task->Status->State === 'running') {
+        foreach ($tasks as $task)
+        {
+            if ($out_stopped || $task->Status->State === 'running')
+            {
                 $ret [] = $task;
             }
         }
@@ -185,17 +190,15 @@ class Docker
     public function containerExec(string $containerId, string $cmd)
     {
         $cmd  = preg_split('/\s+/', $cmd);
-        $exec = $this->post(
-            "/containers/{$containerId}/exec",
-            [
+        $exec = $this->post("/containers/{$containerId}/exec", [
                 "AttachStdin"  => false,
                 "AttachStdout" => true,
                 "AttachStderr" => true,
                 'Cmd'          => $cmd,
-            ]
-        );
+            ]);
 
-        if (empty($exec->Id)) {
+        if (empty($exec->Id))
+        {
             return false;
         }
 
@@ -217,18 +220,22 @@ class Docker
     public function serviceExec(string $serviceId, string $cmd)
     {
         $tasks = $this->serviceTasks($serviceId);
-        if (!is_array($tasks)) {
+        if (!is_array($tasks))
+        {
             return false;
         }
 
         $ret = [];
-        foreach ($tasks as $task) {
-            try {
+        foreach ($tasks as $task)
+        {
+            try
+            {
                 $node           = @$this->node($task->NodeID);
                 $container      = $task->Status->ContainerStatus->ContainerID;
                 $ret[$task->ID] = $node->containerExec($container, $cmd);
             }
-            catch (\Throwable $e) {
+            catch (\Throwable $e)
+            {
                 $ret[$task->ID] = "Can not exec command: {$e->getMessage()}";
             }
         }
@@ -266,7 +273,8 @@ class Docker
     public function node($nodeId)
     {
         $node = $this->get('/nodes/'.$nodeId);
-        if (empty($node->Description->Hostname)) {
+        if (empty($node->Description->Hostname))
+        {
             throw new \Exception('Can not found node hostname');
         }
 

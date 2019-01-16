@@ -12,9 +12,7 @@ trait singleton
 
     final public static function instance()
     {
-        return isset(static::$__singleton)
-            ? static::$__singleton
-            : static::$__singleton = new static();
+        return isset(static::$__singleton) ? static::$__singleton : static::$__singleton = new static();
     }
 
     final private function __wakeup()

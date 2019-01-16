@@ -32,35 +32,39 @@ class controller
 
         $class = explode("\\", get_called_class());
         $count = count($class);
-        if ($count > 1) {
+        if ($count > 1)
+        {
             $classname = $class[$count - 1];
-            if ($classname == 'controller') {
+            if ($classname == 'controller')
+            {
                 $classname = $class[$count - 2];
             }
         }
-        else {
+        else
+        {
             $classname = $class[0];
         }
 
         $action = $this->uri->assoc($classname);
         $arg    = $this->uri->assoc($action);
-        if (method_exists($this, $action)) {
+        if (method_exists($this, $action))
+        {
             $this->$action($arg);
             $this->router->stop();
         }
-        elseif (method_exists($this, 'main')) {
+        elseif (method_exists($this, 'main'))
+        {
             $this->main();
             $this->router->stop();
         }
-        else {
+        else
+        {
             $this->router->continue();
         }
     }
 
-    protected function ajax_response(
-        $data,
-        int $format = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
-    ) {
+    protected function ajax_response($data, int $format = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    {
         $data['success'] = empty($data['error']);
         echo json_encode($data, $format);
         die();
