@@ -89,6 +89,11 @@ class request
         return $this->method === 'CLI';
     }
 
+    public function is_http(): bool
+    {
+        return $this->method !== 'CLI';
+    }
+
     public function is_options(): bool
     {
         return $this->method === 'OPTIONS';
