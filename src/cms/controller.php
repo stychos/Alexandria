@@ -24,6 +24,7 @@ class controller
         $this->router  = cms::module('router');
         $this->theme   = cms::module('theme');
         $this->http    = cms::module('http');
+        $this->db      = cms::module('db');
         $this->user    = auth::user();
         $this->theme->add_vars([
             'user' => $this->user,
