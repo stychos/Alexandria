@@ -13,17 +13,21 @@ class model
     protected $table;
     protected $id_field = 'id';
     protected $id_autoincrement = true;
+    protected $_cache_id;
 
     protected static $_cache = [];
 
     public function __construct($data = null)
     {
         $this->db = cms::module('db');
+
+        $classname = str_replace('\\', '_', get_called_class());
+        $classname = strtolower($classname);
+        $classname = preg_replace('~(\w+)_\1$~', '\1', $classname).'s';
+
+        $this->_cache_id = $classname;
         if (empty($this->table))
         {
-            $classname = str_replace('\\', '_', get_called_class());
-            $classname = strtolower($classname);
-            $classname = preg_replace('~(\w+)_\1$~', '\1', $classname).'s';
             $this->table = $classname;
         }
 
@@ -32,6 +36,8 @@ class model
         {
             $this->fill($data);
         }
+
+        self::$_cache[$this->_cache_id] = [];
     }
 
     public function save(): bool
@@ -235,7 +241,8 @@ class model
             return false;
         }
 
-        foreach (self::$_cache as $cached)
+        $cache_id = (new static())->_cache_id;
+        foreach (self::$_cache[$cache_id] as $cached)
         {
             $match = true;
             foreach ($fields as $name => $value)
@@ -256,7 +263,7 @@ class model
         $data = self::find($fields, $params);
         if (!empty($data[0]))
         {
-            self::$_cache [] = $data[0];
+            self::$_cache [$cache_id] = $data[0];
             return $data[0];
         }
 
