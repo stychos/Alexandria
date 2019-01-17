@@ -3,32 +3,28 @@
 namespace alexandria\cms;
 
 use alexandria\cms;
-use user\auth;
 
 class controller
 {
     protected $uri;
-    protected $request;
     protected $http;
+    protected $request;
     protected $router;
+    protected $config;
     protected $theme;
-    protected $user;
 
     /**
      * @todo wrap output into the response module here
      */
     public function __construct()
     {
-        $this->uri     = cms::module('uri');
-        $this->request = cms::module('request');
-        $this->router  = cms::module('router');
-        $this->theme   = cms::module('theme');
-        $this->http    = cms::module('http');
-        $this->db      = cms::module('db');
-        $this->user    = auth::user();
-        $this->theme->add_vars([
-            'user' => $this->user,
-        ]);
+        $this->uri     = $this->load('uri');
+        $this->http    = $this->load('http');
+        $this->request = $this->load('request');
+        $this->router  = $this->load('router');
+        $this->config  = $this->load('config');
+        $this->theme   = $this->load('theme');
+        $this->_bootstrap();
 
         $class = explode("\\", get_called_class());
         $count = count($class);
@@ -70,11 +66,6 @@ class controller
         die();
     }
 
-    public static function __widget()
-    {
-        return get_called_class()." widget";
-    }
-
     protected function view(string $form, array $args = [])
     {
         return $this->theme->show_form($form, $args);
@@ -85,4 +76,16 @@ class controller
         $module = str_replace('/', '\\', $module);
         return cms::module($module, $args, $new_instance);
     }
+
+
+    protected function _bootstrap()
+    {
+
+    }
+
+    public static function __widget()
+    {
+        return get_called_class()." widget";
+    }
+
 }
