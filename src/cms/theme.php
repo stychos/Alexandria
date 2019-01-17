@@ -92,8 +92,12 @@ class theme
 
     public function load_form(string $form, array $vars = [])
     {
-        foreach ($this->vars as $name => $var) {
-            $vars[$name] = $var;
+        foreach ($this->vars as $name => $var)
+        {
+            if (!isset($vars[$name]))
+            {
+                $vars[$name] = $var;
+            }
         }
 
         if ($this->appdir && strpos($form, '/') !== false)
