@@ -14,13 +14,17 @@ class model
     protected $id_field = 'id';
     protected $id_autoincrement = true;
 
+    protected static $_cache = [];
+
     public function __construct($data = null)
     {
         $this->db = cms::module('db');
         if (empty($this->table))
         {
-            $classname   = str_replace('\\', '_', get_called_class());
-            $classneme   = strtolower($classname).'s';
+            $classname = str_replace('\\', '_', get_called_class());
+            $classname = strtolower($classname);
+            $classname = preg_replace('~(\w+)_\1$~', '\1s', $classname);
+
             $this->table = $classname;
         }
 
@@ -232,8 +236,32 @@ class model
             return false;
         }
 
+        foreach (self::$_cache as $cached)
+        {
+            $match = true;
+            foreach ($fields as $name => $value)
+            {
+                if ($cached->$name != $value)
+                {
+                    $match = false;
+                    break;
+                }
+            }
+
+            if ($match)
+            {
+                return $cached;
+            }
+        }
+
         $data = self::find($fields, $params);
-        return $data[0] ?? false;
+        if (!empty($data[0]))
+        {
+            self::$_cache [] = $data[0];
+            return $data[0];
+        }
+
+        return false;
     }
 
     public static function all()
