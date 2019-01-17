@@ -16,13 +16,15 @@ class model
 
     public function __construct($data = null)
     {
-        $this->db         = cms::module('db');
+        $this->db = cms::module('db');
+        if (empty($this->table))
+        {
+            $classname   = str_replace('\\', '_', get_called_class());
+            $classneme   = strtolower($classname).'s';
+            $this->table = $classname;
+        }
+
         $this->properties = $this->properties ?? [];
-
-        $path        = explode('\\', get_called_class());
-        $class       = array_pop($path);
-        $this->table = $this->table ?? strtolower($class).'s';
-
         if (is_object($data) || is_array($data))
         {
             $this->fill($data);
