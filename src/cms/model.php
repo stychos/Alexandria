@@ -23,8 +23,7 @@ class model
         {
             $classname = str_replace('\\', '_', get_called_class());
             $classname = strtolower($classname);
-            $classname = preg_replace('~(\w+)_\1$~', '\1s', $classname);
-
+            $classname = preg_replace('~(\w+)_\1$~', '\1', $classname).'s';
             $this->table = $classname;
         }
 
