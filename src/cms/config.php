@@ -52,7 +52,7 @@ class config extends cms
 
     public function __isset($name)
     {
-        return (isset($data[$name]));
+        return (isset($this->data[$name]));
     }
 
     public function __get($name)
