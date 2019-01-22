@@ -70,6 +70,8 @@ class smtp
             'email' => $email,
             'name'  => $name,
         ];
+
+        return $this;
     }
 
     public function reply($email, $name = null)
@@ -79,12 +81,15 @@ class smtp
             'email' => $email,
             'name'  => $name,
         ];
+
+        return $this;
     }
 
     public function replyto($email, $name = null)
     {
         // alias
         $this->reply($email, $name);
+        return $this;
     }
 
     public function to($email, $name = null)
@@ -94,6 +99,8 @@ class smtp
             'email' => $email,
             'name'  => $name,
         ];
+
+        return $this;
     }
 
     public function cc($email, $name = null)
@@ -103,6 +110,8 @@ class smtp
             'email' => $email,
             'name'  => $name,
         ];
+
+        return $this;
     }
 
     public function bcc($email, $name = null)
@@ -112,6 +121,8 @@ class smtp
             'email' => $email,
             'name'  => $name,
         ];
+
+        return $this;
     }
 
     public function body($html)
@@ -121,22 +132,26 @@ class smtp
         $html = wordwrap($html, 998, $this->newline);
 
         $this->body = $html;
+        return $this;
     }
 
     public function text($text)
     {
         $this->text = $this->normalize(wordwrap(strip_tags($text), $this->wordwrap));
+        return $this;
     }
 
     public function subject($subject)
     {
         $this->subject = $subject;
+        return $this;
     }
 
     public function attach($path)
     {
         // add
         $this->attachments[] = $path;
+        return $this;
     }
 
     public function send_text()
