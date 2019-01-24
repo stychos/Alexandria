@@ -4,6 +4,7 @@ namespace alexandria;
 
 /**
  * CMS registry
+ * @todo convert to dynamic mode?
  */
 class cms
 {
@@ -19,14 +20,10 @@ class cms
      * @param array $config Modules configuration in [ 'module' => $config ] associative array.
      * @throws \exception
      */
-    public static function start(array $config = [])
+    public static function start(array $config = []): string
     {
+        $buffer = null;
         self::$config = $config;
-
-        if (empty(self::$config['router']))
-        {
-            return;
-        }
 
         // Pathinfo fix (on empty path nginx dont create this cgi variable)
         if (!isset($_SERVER['PATH_INFO']))
@@ -34,14 +31,15 @@ class cms
             $_SERVER['PATH_INFO'] = '';
         }
 
+        // CMS doesn't starts without configured routing
+        if (empty(self::$config['router']))
+        {
+            return null;
+        }
+
         if (!empty(self::$config['router']['path_rewrites']))
         {
             self::module('uri')->add_aliases(self::$config['router']['path_rewrites']);
-        }
-
-        if (!stristr(PHP_SAPI, 'cli'))
-        {
-            self::module('theme');
         }
 
         if (empty(self::$config['router']['autoroute_path']))
@@ -49,15 +47,23 @@ class cms
             self::$config['router']['autoroute_path'] = self::module('uri')->all();
         }
 
-        self::module('router', [self::$config['router']]);
+        // Theming only on Web frontend
+        if (!stristr(PHP_SAPI, 'cli'))
+        {
+            self::module('theme');
+        }
+
+        self::module('router');
         if (!empty(self::$config['router']['autoroute']))
         {
+            ob_start();
             self::module('router')->autoroute();
+            $buffer = ob_get_clean();
         }
 
         if (!stristr(PHP_SAPI, 'cli'))
         {
-            return self::module('theme')->render();
+            return self::module('theme')->render($buffer);
         }
     }
 
