@@ -53,7 +53,11 @@ class theme
         $this->appdir = $args->appdir ?? '';
 
         $this->vars = $args->vars ?? [];
-        $this->prepare();
+
+        if (!file_exists("{$this->theme}/{$this->entry}"))
+        {
+            throw new \Exception("Theme file not found: {$this->theme}/{$this->entry}");
+        }
     }
 
     public function get(): string
@@ -68,16 +72,99 @@ class theme
         $this->wtheme = "{$this->wthemes}/{$this->name}";
     }
 
-    public function prepare()
+    public function render(string $content): string
     {
-        if (!$this->started)
+        ob_start();
+        extract($this->vars, EXTR_SKIP);
+        require "{$this->theme}/{$this->entry}";
+        $buffer = ob_get_clean();
+
+        if (strpos($buffer, '{content}') === false)
         {
-            ob_start();
-            $this->started = true;
+            throw new \Exception('Theme has no {content} section.');
         }
+
+        $buffer = str_replace('{content}', $content, $buffer);
+        $buffer = str_replace('{theme}', $this->wtheme, $buffer);
+        $buffer = str_replace('{root}', $this->wroot, $buffer);
+
+        // Assigned variables
+        $matches = null;
+        preg_match_all('/\{\$(?<var>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $buffer, $matches);
+        if (!empty($matches['var']))
+        {
+            foreach ($matches['var'] as $index => $name)
+            {
+                $src = $matches[0][$index];
+                $val = $this->vars[$name] ?? null;
+                if (!empty($val) && is_scalar($val))
+                {
+                    $buffer = str_replace($src, htmlspecialchars($val), $buffer);
+                }
+                else
+                {
+                    $var    = preg_replace('~\{\$(.+)\}~', '$1', $src);
+                    $esrc   = addslashes($src);
+                    $cmd    = "return \${$var} ?? '{$esrc}';";
+                    $val    = eval($cmd);
+                    $buffer = str_replace($src, htmlspecialchars($val), $buffer);
+                }
+            }
+        }
+
+        // Ret-Evaluations
+        preg_match_all('/<=\s*(?<eval>.+)=>/u', $buffer, $matches);
+        if (!empty($matches[0]))
+        {
+            foreach ($matches['eval'] as $index => $cmd)
+            {
+                $src    = $matches[0][$index];
+                $val    = eval("return {$cmd};");
+                $buffer = str_replace($src, htmlspecialchars($val), $buffer);
+            }
+        }
+
+        // Widgets
+        $matches = null;
+        preg_match_all('/\{\{[a-zA-Z_\x7f-\xff][\\a-zA-Z0-9_\x7f-\xff\/]*\}\}/', $buffer, $matches);
+        if (!empty($matches[0]))
+        {
+            foreach ($matches[0] as $name)
+            {
+                $var = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
+                $var = str_replace('/', '\\', $var);
+
+                foreach ([$var, "{$var}\\controller"] as $controller)
+                {
+                    if (method_exists($controller, '__widget'))
+                    {
+                        $to     = $controller::__widget();
+                        $to     = str_replace('{theme}', $this->wtheme, $to);
+                        $to     = str_replace('{root}', $this->wroot, $to);
+                        $buffer = str_replace($name, $to, $buffer);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Config variables
+        $matches = null;
+        preg_match_all('/\{\[[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\]\}/', $buffer, $matches);
+        if (!empty($matches[0]))
+        {
+            foreach ($matches[0] as $name)
+            {
+                $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
+                $val    = cms::module('config')->$var;
+                $buffer = !empty($val) && is_scalar($val) ? str_replace($name, $val, $buffer) : str_replace($name, '', $buffer);
+            }
+        }
+
+        return $buffer;
     }
 
-    public function add_vars(array $vars)
+    public function vars(array $vars)
     {
         foreach ($vars as $name => $value)
         {
@@ -85,12 +172,7 @@ class theme
         };
     }
 
-    public function show_form(string $form, array $vars = [])
-    {
-        echo $this->load_form($form, $vars);
-    }
-
-    public function load_form(string $form, array $vars = [])
+    public function view(string $form, array $vars = []): string
     {
         foreach ($this->vars as $name => $var)
         {
@@ -125,111 +207,6 @@ class theme
         }
 
         throw new \RuntimeException("Can not load form: {$form}");
-    }
-
-    public function render(): string
-    {
-        if (!file_exists("{$this->theme}/{$this->entry}"))
-        {
-            throw new \RuntimeException("Theme file not found: {$this->theme}/{$this->entry}");
-        }
-
-        if (!$this->started)
-        {
-            throw new \RuntimeException("Theme buffer was not started, nothing to render.");
-        }
-
-        $buffer        = ob_get_clean();
-        $this->started = false;
-
-        ob_start();
-        extract($this->vars, EXTR_SKIP);
-        require "{$this->theme}/{$this->entry}";
-        $render = ob_get_clean();
-
-        if (strpos($render, '{content}') === false)
-        {
-            throw new \RuntimeException('Theme has no {content} section.');
-        }
-
-        $render = str_replace('{content}', $buffer, $render);
-        $render = str_replace('{theme}', $this->wtheme, $render);
-        $render = str_replace('{root}', $this->wroot, $render);
-
-        // Assigned variables
-        $matches = null;
-        preg_match_all('/\{\$(?<var>[a-zA-Z_\x7f-\xff][\->\[\]\'"a-zA-Z0-9_\x7f-\xff]*)\}/', $render, $matches);
-        if (!empty($matches['var']))
-        {
-            foreach ($matches['var'] as $index => $name)
-            {
-                $src = $matches[0][$index];
-                $val = $this->vars[$name] ?? null;
-                if (!empty($val) && is_scalar($val))
-                {
-                    $render = str_replace($src, htmlspecialchars($val), $render);
-                }
-                else
-                {
-                    $var    = preg_replace('~\{\$(.+)\}~', '$1', $src);
-                    $esrc   = addslashes($src);
-                    $cmd    = "return \${$var} ?? '{$esrc}';";
-                    $val    = eval($cmd);
-                    $render = str_replace($src, htmlspecialchars($val), $render);
-                }
-            }
-        }
-
-        // Ret-Evaluations
-        preg_match_all('/<=\s*(?<eval>.+)=>/u', $render, $matches);
-        if (!empty($matches[0]))
-        {
-            foreach ($matches['eval'] as $index => $cmd)
-            {
-                $src    = $matches[0][$index];
-                $val    = eval("return {$cmd};");
-                $render = str_replace($src, htmlspecialchars($val), $render);
-            }
-        }
-
-        // Widgets
-        $matches = null;
-        preg_match_all('/\{\{[a-zA-Z_\x7f-\xff][\\a-zA-Z0-9_\x7f-\xff\/]*\}\}/', $render, $matches);
-        if (!empty($matches[0]))
-        {
-            foreach ($matches[0] as $name)
-            {
-                $var = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
-                $var = str_replace('/', '\\', $var);
-
-                foreach ([$var, "{$var}\\controller"] as $controller)
-                {
-                    if (method_exists($controller, '__widget'))
-                    {
-                        $to     = $controller::__widget();
-                        $to     = str_replace('{theme}', $this->wtheme, $to);
-                        $to     = str_replace('{root}', $this->wroot, $to);
-                        $render = str_replace($name, $to, $render);
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Config variables
-        $matches = null;
-        preg_match_all('/\{\[[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\]\}/', $render, $matches);
-        if (!empty($matches[0]))
-        {
-            foreach ($matches[0] as $name)
-            {
-                $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
-                $val    = cms::module('config')->$var;
-                $render = !empty($val) && is_scalar($val) ? str_replace($name, $val, $render) : str_replace($name, '', $render);
-            }
-        }
-
-        return $render;
     }
 
     public function __destruct()
