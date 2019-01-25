@@ -470,13 +470,7 @@ class smtp
 
     protected function request($string)
     {
-        // report
-        if ($this->logger)
-        {
-            $this->logger->info("SMTP Request: {$string}");
-        }
-
-        // send
+        // todo log here via log interface
         fputs($this->connection, $string);
     }
 
@@ -493,13 +487,7 @@ class smtp
             }
         }
 
-        // report
-        if ($this->logger)
-        {
-            $this->logger->info("SMTP Response: {$response}");
-        }
-
-        // return
+        // todo log here via log interface
         return $response;
     }
 

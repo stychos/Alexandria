@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpIncludeInspection */
 
 /**
  * Alexandria Engine.
@@ -27,6 +27,13 @@ class theme
     protected $entry;
     protected $vars;
 
+    /**
+     * theme constructor.
+     *
+     * @param null $args
+     *
+     * @throws \Exception
+     */
     public function __construct($args = null)
     {
         if (is_array($args))
@@ -60,11 +67,17 @@ class theme
         }
     }
 
+    /**
+     * @return string
+     */
     public function get(): string
     {
         return $this->name;
     }
 
+    /**
+     * @param string $theme
+     */
     public function set(string $theme)
     {
         $this->name   = $theme;
@@ -72,6 +85,13 @@ class theme
         $this->wtheme = "{$this->wthemes}/{$this->name}";
     }
 
+    /**
+     * @param string $content
+     *
+     * @return string
+     * @throws \ReflectionException
+     * @throws \Exception
+     */
     public function render(string $content): string
     {
         ob_start();
@@ -164,6 +184,9 @@ class theme
         return $buffer;
     }
 
+    /**
+     * @param array $vars
+     */
     public function vars(array $vars)
     {
         foreach ($vars as $name => $value)
@@ -172,6 +195,12 @@ class theme
         };
     }
 
+    /**
+     * @param string $form
+     * @param array  $vars
+     *
+     * @return string
+     */
     public function view(string $form, array $vars = []): string
     {
         foreach ($this->vars as $name => $var)
@@ -209,6 +238,9 @@ class theme
         throw new \RuntimeException("Can not load form: {$form}");
     }
 
+    /**
+     *
+     */
     public function __destruct()
     {
         if ($this->started)

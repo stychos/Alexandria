@@ -24,6 +24,8 @@ class controller
      * Basic initializer, loads common modules and finds method to call
      * If no method can be assotiated then calls main()
      * If no main() method exists then tells router to continue search
+     *
+     * @throws \ReflectionException
      */
     public function __construct()
     {

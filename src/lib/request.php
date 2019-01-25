@@ -148,6 +148,8 @@ class request
         {
             return $callback($this->data);
         }
+
+        return null;
     }
 
 

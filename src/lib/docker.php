@@ -7,7 +7,7 @@ namespace alexandria\lib;
  */
 class Docker
 {
-    protected $api;
+    protected        $api;
     protected static $nodes;
 
     public function __construct(string $api)
@@ -20,6 +20,9 @@ class Docker
      *
      * @param  string $query   Query to call
      * @param  array  $filters Additional Docker API filters as an array
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
     public function get(string $query, array $filters = [])
     {
@@ -27,11 +30,11 @@ class Docker
         if (!empty($filters))
         {
             $filters = http_build_query(['filters' => json_encode($filters)]);
-            $query   .= strpos($query, '?') === false ? '?'.$filters : '&'.$filters;
+            $query   .= strpos($query, '?') === false ? '?' . $filters : '&' . $filters;
         }
 
         error_clear_last();
-        $response = @file_get_contents($this->api.'/'.$query);
+        $response = @file_get_contents($this->api . '/' . $query);
         $e        = error_get_last();
         if (!empty($e))
         {
@@ -47,6 +50,9 @@ class Docker
      *
      * @param  string $query Query to call
      * @param  array  $args  Arguments to pass as an POST body
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
     public function post(string $query, array $args = [])
     {
@@ -61,7 +67,7 @@ class Docker
 
         error_clear_last();
         $context  = stream_context_create($options);
-        $response = @file_get_contents($this->api.'/'.$query, false, $context);
+        $response = @file_get_contents($this->api . '/' . $query, false, $context);
         $e        = error_get_last();
         if (!empty($e))
         {
@@ -76,15 +82,17 @@ class Docker
      * Pass the raw HTTP DELETE query to the Docker API
      *
      * @param  string $query Query to call
-     * @param  array  $args  Arguments to pass as an DELETE body
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
-    protected function delete(string $query, array $args = [])
+    protected function delete(string $query)
     {
         $query = trim($query, '/');
 
         error_clear_last();
         $context  = stream_context_create(['http' => ['method' => 'DELETE']]);
-        $response = @file_get_contents($this->api.'/'.$query, false, $context);
+        $response = @file_get_contents($this->api . '/' . $query, false, $context);
         $e        = error_get_last();
         if (!empty($e))
         {
@@ -97,6 +105,8 @@ class Docker
 
     /**
      * Return Docker info
+     *
+     * @throws \Exception
      */
     public function info()
     {
@@ -107,15 +117,18 @@ class Docker
      * Return info about service / all services
      *
      * @param  string|null $id Service name to get (if specified)
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
     public function services(string $id = null)
     {
         if (!empty($id))
         {
-            $id = '/'.$id;
+            $id = '/' . $id;
         }
 
-        return $this->get('/services'.$id);
+        return $this->get('/services' . $id);
     }
 
     /**
@@ -123,6 +136,9 @@ class Docker
      *
      * @param  string       $serviceId   Service name
      * @param  bool|boolean $out_stopped If true, return stopped tasks too
+     *
+     * @return array
+     * @throws \Exception
      */
     public function serviceTasks(string $serviceId, bool $out_stopped = false)
     {
@@ -146,6 +162,9 @@ class Docker
      * Create service
      *
      * @param array $data Service specification, must conform to Docker Remote API structure
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
     public function serviceCreate(array $data)
     {
@@ -156,10 +175,13 @@ class Docker
      * Destroy service
      *
      * @param string $id Id or name of the Service
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
     public function serviceDelete($id)
     {
-        return $this->delete('/services/'.$id);
+        return $this->delete('/services/' . $id);
     }
 
 
@@ -167,6 +189,9 @@ class Docker
      * Return container "top" command results
      *
      * @param string $containerId Id or name of container
+     *
+     * @return false|mixed|string
+     * @throws \Exception
      */
     public function containerTop(string $containerId)
     {
@@ -175,6 +200,8 @@ class Docker
 
     /**
      * Return running containers list
+     *
+     * @throws \Exception
      */
     public function containers()
     {
@@ -186,28 +213,31 @@ class Docker
      *
      * @param string $containerId Id or name of container
      * @param string $cmd         Command to execute
+     *
+     * @return bool
+     * @throws \Exception
      */
     public function containerExec(string $containerId, string $cmd)
     {
         $cmd  = preg_split('/\s+/', $cmd);
         $exec = $this->post("/containers/{$containerId}/exec", [
-                "AttachStdin"  => false,
-                "AttachStdout" => true,
-                "AttachStderr" => true,
-                'Cmd'          => $cmd,
-            ]);
+            "AttachStdin"  => false,
+            "AttachStdout" => true,
+            "AttachStderr" => true,
+            'Cmd'          => $cmd,
+        ]);
 
         if (empty($exec->Id))
         {
             return false;
         }
 
-        $ret = $this->post('/exec/'.$exec->Id.'/start', [
+        $this->post('/exec/' . $exec->Id . '/start', [
             'Detach' => false,
             'Tty'    => true,
         ]);
 
-        $status = $this->get('/exec/'.$exec->Id.'/json');
+        $status = $this->get('/exec/' . $exec->Id . '/json');
         return $status->ExitCode === 0;
     }
 
@@ -216,6 +246,9 @@ class Docker
      *
      * @param string $serviceId Name of service
      * @param string $cmd       Command to execute
+     *
+     * @return array|bool
+     * @throws \Exception
      */
     public function serviceExec(string $serviceId, string $cmd)
     {
@@ -249,6 +282,9 @@ class Docker
      * @param  string $stackId   Stack Name
      * @param  string $serviceId Service Name in a stack
      * @param  string $cmd       Command to execute
+     *
+     * @return array|bool
+     * @throws \Exception
      */
     public function stackExec(string $stackId, string $serviceId, string $cmd)
     {
@@ -259,6 +295,8 @@ class Docker
      * Removes service
      *
      * @param  string $serviceId Service name to remove
+     *
+     * @throws \Exception
      */
     public function serviceRemove(string $serviceId)
     {
@@ -269,10 +307,13 @@ class Docker
      * Return instance of Docker for the specified node
      *
      * @param string $nodeId Id of the node
+     *
+     * @return Docker
+     * @throws \Exception
      */
     public function node($nodeId)
     {
-        $node = $this->get('/nodes/'.$nodeId);
+        $node = $this->get('/nodes/' . $nodeId);
         if (empty($node->Description->Hostname))
         {
             throw new \Exception('Can not found node hostname');
@@ -285,6 +326,8 @@ class Docker
 
     /**
      * Get list of all cluster nodes
+     *
+     * @throws \Exception
      */
     public function nodeList()
     {

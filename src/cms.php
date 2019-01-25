@@ -18,6 +18,8 @@ class cms
      * Starts CMS cycle.
      *
      * @param array $config Modules configuration in [ 'module' => $config ] associative array.
+     *
+     * @return string
      * @throws \exception
      */
     public static function start(array $config = []): string
@@ -65,6 +67,8 @@ class cms
         {
             return self::module('theme')->render($buffer);
         }
+
+        return $buffer;
     }
 
     /**
@@ -120,6 +124,8 @@ class cms
         {
             throw new \RuntimeException("Can not find module {$module}.");
         }
+
+        return null;
     }
 
     /**

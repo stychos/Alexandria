@@ -3,27 +3,39 @@
 namespace alexandria\cms;
 
 use alexandria\cms;
+use alexandria\lib\db;
 use alexandria\traits\properties;
 
+/**
+ * @property array properties
+ */
 class model
 {
     use properties;
 
+    /** @var db\ddi $db */
     protected $db;
     protected $table;
-    protected $id_field = 'id';
+    protected $id_field         = 'id';
     protected $id_autoincrement = true;
     protected $_cache_id;
 
     protected static $_cache = [];
 
+    /**
+     * model constructor.
+     *
+     * @param mixed|null $data
+     *
+     * @throws \ReflectionException
+     */
     public function __construct($data = null)
     {
         $this->db = cms::module('db');
 
         $classname = str_replace('\\', '_', get_called_class());
         $classname = strtolower($classname);
-        $classname = preg_replace('~(\w+)_\1$~', '\1', $classname).'s';
+        $classname = preg_replace('~(\w+)_\1$~', '\1', $classname) . 's';
 
         $this->_cache_id = $classname;
         if (empty($this->table))
@@ -40,15 +52,18 @@ class model
         self::$_cache[$this->_cache_id] = [];
     }
 
+    /**
+     * @return bool
+     */
     public function save(): bool
     {
-        $vars = [];
         $data = $this->data();
 
         // new record
         if (empty($data->{$this->id_field}))
         {
-            $query = "INSERT INTO `{$this->table}` SET ";
+            $qdata = [];
+            $vars  = [];
             foreach ($this->properties as $name => $_)
             {
                 if ($name == $this->id_field)
@@ -56,14 +71,17 @@ class model
                     continue;
                 }
 
-                $query            .= "`{$name}` = :{$name}, ";
+                $qdata[]          = "`{$name}` = :{$name}";
                 $vars[":{$name}"] = $data->$name;
             }
 
-            $query = preg_replace('~\, $~', '', $query); // fix last comma
+            $qdata = implode(', ', $qdata);
+            $query = "INSERT INTO `{$this->table}` SET {$qdata}";
             $ret   = $this->db->query($query, $vars);
+
             if ($ret && $this->id_autoincrement)
             {
+                // override possible readonly via fill()
                 $this->fill([
                     $this->id_field => $this->db->id(),
                 ]);
@@ -73,35 +91,44 @@ class model
         // update exist record
         else
         {
-            $query = "UPDATE `{$this->table}` SET ";
+            $qdata = [];
+            $vars  = [
+                ":{$this->id_field}" => $data->{$this->id_field},
+            ];
+
             foreach ($this->properties as $name => $_)
             {
-                $query            .= "`{$name}` = :{$name}, ";
+                $qdata[]          = "`{$name}` = :{$name}";
                 $vars[":{$name}"] = $data->$name;
             }
 
-            $query       = preg_replace('~\, $~', ' ', $query); // fix last comma
-            $query       .= "WHERE `{$this->id_field}` = :id";
-            $vars[':id'] = $data->{$this->id_field};
-
-            $ret = $this->db->query($query, $vars);
+            $qdata = implode(", ", $qdata);
+            $query = "UPDATE `{$this->table}` SET {$qdata} WHERE `{$this->id_field}` = :id";
+            $ret   = $this->db->query($query, $vars);
         }
 
         return $ret;
     }
 
-    public function delete()
+    /**
+     * @return bool
+     */
+    public function delete(): bool
     {
         $data = $this->data();
         $ret  = $this->db->query("
-            DELETE FROM `{$this->table}`
-            WHERE `{$this->id_field}` = :id", [
+          DELETE FROM `{$this->table}`
+          WHERE `{$this->id_field}` = :id", [
             ':id' => $data->{$this->id_field},
         ]);
 
         return $ret;
     }
 
+    /**
+     * @return string
+     * @throws \ReflectionException
+     */
     public static function table(): string
     {
         return (new static())->table;
@@ -125,14 +152,18 @@ class model
      * ^ match with LIKE
      * ~ match with RLIKE
      *
+     * @param string|array $arg1
+     * @param null         $arg2
+     * @param array        $arg3
+     *
      * @return static[]
+     * @throws \ReflectionException
      */
     public static function find($arg1, $arg2 = null, array $arg3 = []): array
     {
         $static = new static();
         $table  = $static->table;
         $db     = $static->db;
-        unset($static);
 
         $ret = [];
         $sql = "SELECT * FROM `{$table}` WHERE ";
@@ -140,8 +171,14 @@ class model
         $fields = null;
         $qmasks = null;
 
+        // search by id field
+        if (is_scalar($arg1) && is_null($arg2))
+        {
+            $fields = [$static->id_field => $arg1];
+        }
+
         // if field passed as scalar with value in the second argument and params in the third
-        if (is_scalar($arg1) && is_scalar($arg2))
+        elseif (is_scalar($arg1) && is_scalar($arg2))
         {
             $fields = [$arg1 => $arg2];
             $params = $arg3;
@@ -188,10 +225,14 @@ class model
             if (is_scalar($order))
             {
                 preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $order, $matches);
-                $direction = $matches['direction'] ?? 'asc';
+                $direction = $matches['direction'] ?? 'ASC';
                 $direction = strtoupper($direction);
-                $field     = $matches['field'] ?? $_;
-                $sql       .= "ORDER BY `{$field}` {$direction}, ";
+
+                $field = $matches['field'] ?? null;
+                if ($field)
+                {
+                    $sql .= "ORDER BY `{$field}` {$direction}, ";
+                }
             }
             elseif (is_iterable($order))
             {
@@ -199,10 +240,14 @@ class model
                 foreach ($order as $_)
                 {
                     preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $_, $matches);
-                    $direction = $matches['direction'] ?? 'asc';
+                    $direction = $matches['direction'] ?? 'ASC';
                     $direction = strtoupper($direction);
-                    $field     = $matches['field'] ?? $_;
-                    $sql       .= "`{$field}` {$direction}, ";
+
+                    $field = $matches['field'] ?? null;
+                    if ($field)
+                    {
+                        $sql .= "`{$field}` {$direction}, ";
+                    }
                 }
             }
             $sql = preg_replace('~\, $~', ' ', $sql);
@@ -223,7 +268,14 @@ class model
         return $ret;
     }
 
-    public static function get($arg1, $arg2 = null)
+    /**
+     * @param      $arg1
+     * @param null $arg2
+     *
+     * @return static|false
+     * @throws \ReflectionException
+     */
+    public static function get($arg1, $arg2 = null): ?model
     {
         $fields = null;
         $params = ['limit' => 1];
@@ -238,7 +290,7 @@ class model
         }
         else
         {
-            return false;
+            return null;
         }
 
         $cache_id = (new static())->_cache_id;
@@ -270,7 +322,11 @@ class model
         return false;
     }
 
-    public static function all()
+    /**
+     * @return static[]
+     * @throws \ReflectionException
+     */
+    public static function all(): array
     {
         $static = new static();
         $table  = $static->table;
@@ -288,7 +344,14 @@ class model
         return $ret;
     }
 
-    public static function count($arg1, $arg2 = null)
+    /**
+     * @param      $arg1
+     * @param null $arg2
+     *
+     * @return int|null
+     * @throws \ReflectionException
+     */
+    public static function count($arg1, $arg2 = null): ?int
     {
         $static = new static();
         $table  = $static->table;
@@ -312,7 +375,7 @@ class model
         }
         else
         {
-            return [];
+            return null;
         }
 
         foreach ($fields as $field => $value)

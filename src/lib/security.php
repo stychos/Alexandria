@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpMethodMayBeStaticInspection */
 
 namespace alexandria\lib;
 

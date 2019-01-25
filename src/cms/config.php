@@ -10,6 +10,11 @@ class config extends cms
     protected $table = 'config';
     protected $table_exists;
 
+    /**
+     * config constructor.
+     *
+     * @throws \ReflectionException
+     */
     public function __construct()
     {
         // 1. read config values from CMS starter
@@ -34,7 +39,7 @@ class config extends cms
         if ($this->table_exists)
         {
             // 2. read & override from database
-            $data = cms::db()->query("
+            $data = cms::module('db')->query("
               SELECT *
               FROM {$this->table}");
 
@@ -65,6 +70,12 @@ class config extends cms
         return false;
     }
 
+    /**
+     * @param $name
+     * @param $value
+     *
+     * @throws \ReflectionException
+     */
     public function __set($name, $value)
     {
         $this->data[$name]->type  = gettype($value);
@@ -72,7 +83,7 @@ class config extends cms
 
         if ($this->table_exists)
         {
-            cms::db()->query("
+            cms::module('db')->query("
             REPLACE INTO {$this->table} (`name`, `type`, `value`)
             VALUES (:name, :type, :value)", [
                 ':name'  => $name,

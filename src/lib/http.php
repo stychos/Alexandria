@@ -21,6 +21,8 @@ class http
 
     /**
      * Redirects to specified URI
+     *
+     * @param string $to
      */
     public function redirect(string $to)
     {

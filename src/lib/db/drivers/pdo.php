@@ -9,6 +9,11 @@ class pdo implements ddi
     protected $pdo;
     protected $query;
 
+    /**
+     * pdo constructor.
+     *
+     * @param $args
+     */
     public function __construct($args)
     {
         if (empty($args['dsn']))
@@ -22,17 +27,20 @@ class pdo implements ddi
         $this->pdo = new \PDO($args['dsn'], $username, $password, $options);
     }
 
-    public function trim(string $query): string
+    /**
+     * @param string $query
+     * @param array  $args
+     * @param int    $mode
+     * @param string $cast
+     *
+     * @return array|bool|mixed
+     */
+    public function &query(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
     {
         $query = preg_replace("/[\\n\\t]/", ' ', $query);
         $query = preg_replace("/\s+/", ' ', $query);
         $query = trim(rtrim($query));
-        return $query;
-    }
 
-    public function &query(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
-    {
-        $query = $this->trim($query);
         if (empty($mode))
         {
             $mode = self::result_object;
@@ -82,6 +90,14 @@ class pdo implements ddi
         return $ret;
     }
 
+    /**
+     * @param string $query
+     * @param array  $args
+     * @param int    $mode
+     * @param string $cast
+     *
+     * @return array|bool|mixed
+     */
     public function first(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
     {
         $ret = $this->query($query, $args, self::result_first, $cast);
@@ -102,26 +118,47 @@ class pdo implements ddi
         return $ret;
     }
 
+    /**
+     * @param string $query
+     * @param array  $args
+     *
+     * @return array|bool|mixed
+     */
     public function shot(string $query, array $args = [])
     {
         return $this->query($query, $args, self::result_shot);
     }
 
+    /**
+     * @return string
+     */
     public function id()
     {
         return $this->pdo->lastInsertId();
     }
 
+    /**
+     * @param      $value
+     * @param null $type
+     *
+     * @return string
+     */
     public function quote($value, $type = null)
     {
         return $this->pdo->quote($value, $type);
     }
 
+    /**
+     * @return string
+     */
     public function last_query(): string
     {
         return $this->query;
     }
 
+    /**
+     * @return $this
+     */
     public function get_driver()
     {
         return $this;

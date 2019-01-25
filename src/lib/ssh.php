@@ -1,4 +1,8 @@
-<?php
+<?php /** @noinspection PhpUndefinedConstantInspection */
+/** @noinspection PhpUndefinedConstantInspection */
+/** @noinspection PhpUndefinedFunctionInspection */
+
+/** @noinspection PhpUndefinedConstantInspection */
 
 namespace alexandria\lib;
 
@@ -31,6 +35,9 @@ class ssh
         $this->method  = $args['method'] ?? self::auth_pass;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function connect()
     {
         $this->connection = ssh2_connect($this->host, $this->port);
@@ -57,6 +64,12 @@ class ssh
         }
     }
 
+    /**
+     * @param $cmd
+     *
+     * @return string
+     * @throws \Exception
+     */
     public function exec($cmd)
     {
         if (!$this->connection)
@@ -81,6 +94,9 @@ class ssh
         return empty($data) ? $errors : $data;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function disconnect()
     {
         if ($this->connection)
@@ -91,6 +107,9 @@ class ssh
         $this->connection = null;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function __destruct()
     {
         $this->disconnect();

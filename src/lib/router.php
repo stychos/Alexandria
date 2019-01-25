@@ -73,7 +73,7 @@ class router
         // some preroute controller told us to halt
         if (!$this->continue)
         {
-            return;
+            return false;
         }
 
         // do not autocontinue after prerouting

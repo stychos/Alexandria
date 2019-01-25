@@ -6,6 +6,11 @@ class uploads
 {
     protected $files = [];
 
+    /**
+     * uploads constructor.
+     *
+     * @param string|null $name
+     */
     public function __construct(string $name = null)
     {
         foreach ($_FILES as $upname => $upvalue)
@@ -38,6 +43,13 @@ class uploads
         }
     }
 
+    /**
+     * @param string $to
+     * @param int    $chmod
+     *
+     * @return array
+     * @throws \Exception
+     */
     public function save_all(string $to, int $chmod = 0644)
     {
         $ret = [];
@@ -52,7 +64,16 @@ class uploads
         return $ret;
     }
 
-    public function save(int $index = 0, string $to, string $filename = null, int $chmod = 0644)
+    /**
+     * @param int         $index
+     * @param string      $to
+     * @param string|null $filename
+     * @param int         $chmod
+     *
+     * @return bool|string
+     * @throws \Exception
+     */
+    public function save(int $index, string $to, string $filename = null, int $chmod = 0644)
     {
         if (!is_dir($to) && !mkdir($to, 0775, true))
         {

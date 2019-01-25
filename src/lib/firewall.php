@@ -77,6 +77,11 @@ class firewall
 
     /**
      * ip to mask matching (cidr formats)
+     *
+     * @param $ip
+     * @param $mask
+     *
+     * @return bool
      */
     protected function _match($ip, $mask)
     {
