@@ -59,10 +59,15 @@ class controller
             echo $this->$action($arg);
             $this->router->stop();
         }
+        elseif (empty($action) && method_exists($this, 'index'))
+        {
+            $this->router->stop();
+            echo $this->index();
+        }
         elseif (method_exists($this, 'main'))
         {
+            $this->router->stop(); // stop before controller call 'cause controller may want to return router flow
             echo $this->main($action);
-            $this->router->stop();
         }
         else
         {
