@@ -319,7 +319,7 @@ class model
             return $data[0];
         }
 
-        return false;
+        return null;
     }
 
     /**

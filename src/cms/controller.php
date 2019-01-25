@@ -61,17 +61,13 @@ class controller
         }
         elseif (empty($action) && method_exists($this, 'index'))
         {
-            $this->router->stop();
             echo $this->index();
+            $this->router->stop();
         }
         elseif (method_exists($this, 'main'))
         {
-            $this->router->stop(); // stop before controller call 'cause controller may want to return router flow
             echo $this->main($action);
-        }
-        else
-        {
-            $this->router->continue();
+            $this->router->stop();
         }
     }
 
