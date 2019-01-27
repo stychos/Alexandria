@@ -131,7 +131,8 @@ class model
      */
     public static function table(): string
     {
-        return (new static())->table;
+        $static = new static;
+        return $static->table;
     }
 
     /**
@@ -161,43 +162,45 @@ class model
      */
     public static function find($arg1, $arg2 = null, array $arg3 = []): array
     {
-        $static = new static();
+        $static = new static;
         $table  = $static->table;
         $db     = $static->db;
+        unset($static);
 
-        $ret = [];
-        $sql = "SELECT * FROM `{$table}` WHERE ";
-
+        $ret    = [];
         $fields = null;
-        $qmasks = null;
+        $qdata  = null;
 
-        // search by id field
+        // search by primary field, no params
         if (is_scalar($arg1) && is_null($arg2))
         {
             $fields = [$static->id_field => $arg1];
         }
 
-        // if field passed as scalar with value in the second argument and params in the third
+        // search by the field => value pair, params in the third argument
         elseif (is_scalar($arg1) && is_scalar($arg2))
         {
             $fields = [$arg1 => $arg2];
             $params = $arg3;
         }
 
-        // filds-values passed as array and params in the second argument
+        // search by [ field => value ] array, params in the second argument
         elseif (is_array($arg1) && !empty($arg1))
         {
             $fields = $arg1;
             $params = is_array($arg2) ? $arg2 : [];
         }
+
+        // invalid arguments
         else
         {
             return [];
         }
 
+        $where = [];
         foreach ($fields as $field => $value)
         {
-            preg_match('#^(?<operator>!|>=?|<=?|=|\~|\^)?\s?(?<value>.+)#', $value, $matches);
+            preg_match('#^(?<operator>!=?|>=?|<=?|==?|\~|\^)?\s?(?<value>.+)#', $value, $matches);
             $operator = $matches['operator'] ?? '=';
             if (empty($operator))
             {
@@ -211,18 +214,21 @@ class model
             {
                 $operator = 'RLIKE';
             }
+            elseif ($operator == '!')
+            {
+                $operator = '!=';
+            }
 
-            $value = $matches['value'] ?? $value;
-
-            $qmasks[":{$field}"] = $value;
-            $sql                 .= "`{$field}` {$operator} :{$field} AND ";
+            $value              = $matches['value'] ?? $value;
+            $where[]            = "(`{$field}` {$operator} :{$field})";
+            $qdata[":{$field}"] = $value;
         }
-        $sql = preg_replace('~ AND $~', ' ', $sql);
+        $where = 'WHERE ' . implode(' AND ', $where);
 
-        $order = $params['order'] ?? null;
-        if ($order)
+        $order = '';
+        if (!empty($params['order']))
         {
-            if (is_scalar($order))
+            if (is_scalar($params['order']))
             {
                 preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $order, $matches);
                 $direction = $matches['direction'] ?? 'ASC';
@@ -231,13 +237,13 @@ class model
                 $field = $matches['field'] ?? null;
                 if ($field)
                 {
-                    $sql .= "ORDER BY `{$field}` {$direction}, ";
+                    $order = "ORDER BY `{$field}` {$direction}, ";
                 }
             }
-            elseif (is_iterable($order))
+            elseif (is_iterable($params['order']))
             {
-                $sql .= "ORDER BY ";
-                foreach ($order as $_)
+                $order = [];
+                foreach ($params['order'] as $_)
                 {
                     preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $_, $matches);
                     $direction = $matches['direction'] ?? 'ASC';
@@ -246,20 +252,21 @@ class model
                     $field = $matches['field'] ?? null;
                     if ($field)
                     {
-                        $sql .= "`{$field}` {$direction}, ";
+                        $order[] = "`{$field}` {$direction}";
                     }
                 }
+                $order = 'ORDER BY' . implode(', ', $order);
             }
-            $sql = preg_replace('~\, $~', ' ', $sql);
         }
 
-        $limit = $params['limit'] ?? null;
-        if (is_numeric($limit) || preg_match('~^\s*\d+(\,\s*\d+)?\s*$~', $limit))
+        $limit = null;
+        if (!empty($params['limit']) && preg_match('~^\s*\d+(\,\s*\d+)?\s*$~', $params['limit']))
         {
-            $sql .= "LIMIT {$limit} ";
+            $limit = "LIMIT {$params['limit']}";
         }
 
-        $data = $db->query($sql, $qmasks);
+        $sql  = "SELECT * FROM `{$table}` {$where} {$order} {$limit}";
+        $data = $db->query($sql, $qdata);
         foreach ($data as $item)
         {
             $ret [] = new static($item);
@@ -279,21 +286,33 @@ class model
     {
         $fields = null;
         $params = ['limit' => 1];
+        $static = new static;
 
-        if (is_scalar($arg1) && is_scalar($arg2))
+        // search by primary field, no params
+        if (is_scalar($arg1) && is_null($arg2))
+        {
+            $fields = [$static->id_field => $arg1];
+        }
+
+        // search by the field => value pair, params in the third argument
+        elseif (is_scalar($arg1) && is_scalar($arg2))
         {
             $fields = [$arg1 => $arg2];
         }
+
+        // search by [ field => value ] array, params in the second argument
         elseif (is_array($arg1) && !empty($arg1))
         {
             $fields = $arg1;
         }
+
+        // invalid arguments
         else
         {
             return null;
         }
 
-        $cache_id = (new static())->_cache_id;
+        $cache_id = $static->_cache_id;
         foreach (self::$_cache[$cache_id] as $cached)
         {
             $match = true;
@@ -328,7 +347,7 @@ class model
      */
     public static function all(): array
     {
-        $static = new static();
+        $static = new static;
         $table  = $static->table;
         $db     = $static->db;
         unset($static);
@@ -353,12 +372,11 @@ class model
      */
     public static function count($arg1, $arg2 = null): ?int
     {
-        $static = new static();
+        $static = new static;
         $table  = $static->table;
         $db     = $static->db;
         unset($static);
 
-        $sql    = "SELECT COUNT(*) FROM `{$table}` WHERE ";
         $fields = null;
         $qmasks = null;
 
