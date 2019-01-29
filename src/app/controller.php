@@ -1,16 +1,7 @@
 <?php
 
-namespace alexandria\cms;
+namespace alexandria\app;
 
-use alexandria\cms;
-
-/**
- * Class controller
- *
- * Common controller template
- *
- * @package alexandria\cms
- */
 class controller
 {
     protected $uri;
@@ -24,17 +15,15 @@ class controller
      * Basic initializer, loads common modules and finds method to call
      * If no method can be assotiated then calls main()
      * If no main() method exists then tells router to continue search
-     *
-     * @throws \ReflectionException
      */
     public function __construct()
     {
-        $this->uri     = $this->module('uri');
-        $this->http    = $this->module('http');
-        $this->request = $this->module('request');
-        $this->router  = $this->module('router');
-        $this->config  = $this->module('config');
-        $this->theme   = $this->module('theme');
+        $this->uri     = $this->load('uri');
+        $this->http    = $this->load('http');
+        $this->request = $this->load('request');
+        $this->router  = $this->load('router');
+        $this->config  = $this->load('config');
+        $this->theme   = $this->load('theme');
         $this->__bootstrap();
 
         $class = explode("\\", get_called_class());
@@ -106,15 +95,12 @@ class controller
      * Loads framework/application module and returns its instance
      *
      * @param string     $module
-     * @param array|null $args
-     * @param bool       $new_instance
      * @return mixed
-     * @throws \ReflectionException
      */
-    protected function module(string $module, ?array $args = [], bool $new_instance = false)
+    protected function load(string $module)
     {
         $module = str_replace('/', '\\', $module);
-        return cms::module($module, $args, $new_instance);
+        return kernel::load($module);
     }
 
     /**

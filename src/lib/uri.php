@@ -16,9 +16,11 @@ class uri
     protected $raw_wwwroot;
     protected $subdir;
 
-    public function __construct(string $uri = null, array $cli_vars = [])
+    public function __construct($config = [])
     {
-        $this->build($uri, $cli_vars);
+        $from = $config->from ?? null;
+        $vars = $config->vars ?? [];
+        $this->build($from, $vars);
     }
 
     public function build(string $uri = null, array $cli_vars = [])
@@ -47,7 +49,7 @@ class uri
                 while (isset($_SERVER['argv'][$k]))
                 {
                     $element = str_replace('/', '^^S^^', $_SERVER['argv'][$k]);
-                    $uri     .= $element.'/';
+                    $uri     .= $element . '/';
                     $k++;
                 }
 
@@ -76,7 +78,7 @@ class uri
             $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' || isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == '443') ? 'https://' : 'http://';
 
             $this->raw_docroot = $_SERVER['DOCUMENT_ROOT'];
-            $this->raw_wwwroot = $scheme.$_SERVER['HTTP_HOST'];
+            $this->raw_wwwroot = $scheme . $_SERVER['HTTP_HOST'];
 
             $srv          = str_replace('\\', '/', $_SERVER['SCRIPT_NAME']);
             $sub          = preg_replace('#/[^/]+$#', '', $srv);

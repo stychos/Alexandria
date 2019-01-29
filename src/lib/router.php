@@ -32,55 +32,74 @@ class router
         $this->rewrites    = $args['rewrites'] ?? [];
     }
 
-    public function route(string $route): bool
+    public function route(string $route): ?string
     {
+        $buff = null;
         $original_route = $route;
         foreach ($this->rewrites as $from => $to)
         {
             $route = str_replace($from, $to, $route);
         }
 
-        foreach ((array) $this->search_controllers as $class)
+        foreach ($this->search_controllers as $class)
         {
             $controller = str_replace('{$route}', $route, $class);
             $controller = str_replace('/', '\\', $controller);
-            if (class_exists($controller) && method_exists($controller, '__construct'))
+            if (class_exists($controller))
             {
                 $this->active_route = $route;
-                $this->tail         = str_replace($original_route, '', $this->autoroute_path);
-                $this->tail         = trim(rtrim($this->tail, '/'), '/');
 
-                new $controller();
-                return true;
+                $this->tail = str_replace($original_route, '', $this->autoroute_path);
+                $this->tail = trim(rtrim($this->tail, '/'), '/');
+
+                ob_start();
+                $instance = new $controller();
+                $tmp = ob_get_clean();
+
+                if (method_exists($instance, 'main'))
+                {
+                    $buff .= $instance->main();
+                }
+                elseif(method_exists($instance, 'index'))
+                {
+                    $buff .= $instance->index();
+                }
+                else
+                {
+                    $buff .= $tmp;
+                }
+                break;
             }
         }
 
-        return false;
+        return $buff;
     }
 
     /**
      * @param bool $use_fallback
      *
-     * @return bool
-     * @throws \Exception
+     * @return string|null
      */
-    public function autoroute(bool $use_fallback = true)
+    public function autoroute(bool $use_fallback = true): ?string
     {
+        // combined buffer
+        $buff = null;
+
         // run pre-routes first
         $this->continue = true;
-        $this->preroute();
+        $buff .= $this->preroute();
 
         // some preroute controller told us to halt
         if (!$this->continue)
         {
-            return false;
+            return $buff;
         }
 
         // do not autocontinue after prerouting
         $this->continue = false;
 
         // main routing cycle, walking up by query path
-        $routed = false;
+        $routed = null;
         if (!empty($this->autoroute_path))
         {
             $path = explode('/', $this->autoroute_path);
@@ -88,15 +107,16 @@ class router
             do
             {
                 $sub = implode('/', $path);
-                if ($this->route($sub))
+                $routed = $this->route($sub);
+                if ($routed)
                 {
-                    $routed = true;
+                    $buff .= $routed;
 
                     // check if called controller has set router to continue auto-routing
                     if ($this->continue)
                     {
-                        $routed         = false;
                         $this->continue = false;
+                        continue;
                     }
                     else
                     {
@@ -111,7 +131,7 @@ class router
 
         if (!$use_fallback)
         {
-            return $routed;
+            return $buff;
         }
 
         // try default route if no automatic route was found and if path is empty
@@ -126,8 +146,8 @@ class router
             $routed = $this->route($this->fail_route);
         }
 
-        // run post-routes after all
-        $this->postroute();
+        $buff .= $routed;
+        $buff .= $this->postroute(); // run post-routes after all
 
         // if we still not routed, then it's a fatal
         if (!$routed)
@@ -137,28 +157,30 @@ class router
                 http_response_code(404);
             }
 
-            throw new \Exception("Route class for {$this->autoroute_path} not found. Default and fail routes are not found too. Check your configuration.");
+            trigger_error("Route class for {$this->autoroute_path} not found. Default and fail routes are not found too. Check your configuration.", E_USER_WARNING);
         }
 
-        return true;
+        return $buff;
     }
 
     /**
      * @param string   $to
      * @param uri|null $uri
      *
-     * @throws \exception
+     * @return string|null
      */
     public function reroute(string $to, uri $uri = null)
     {
         $this->autoroute_path = $to;
-        $this->autoroute($use_fallbacks = false);
+        $buff                 = $this->autoroute($use_fallbacks = false);
 
         if ($uri)
         {
-            $new_uri = rtrim($to, '/').'/'.$this->tail;
+            $new_uri = rtrim($to, '/') . '/' . $this->tail;
             $uri->build($new_uri);
         }
+
+        return $buff;
     }
 
     public function continue()
@@ -171,23 +193,31 @@ class router
         $this->continue = false;
     }
 
-    protected function preroute()
+    protected function preroute(): ?string
     {
+        $buff = null;
+
         foreach ($this->pre_routes as $route)
         {
             if ($this->continue)
             {
-                $this->route($route);
+                $buff .= $this->route($route);
             }
         }
+
+        return $buff;
     }
 
-    protected function postroute()
+    protected function postroute(): ?string
     {
+        $buff = null;
+
         foreach ($this->post_routes as $route)
         {
-            $this->route($route);
+            $buff .= $this->route($route);
         }
+
+        return $buff;
     }
 
     public function tail()

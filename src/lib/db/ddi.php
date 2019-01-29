@@ -12,7 +12,7 @@ interface ddi
 
     public function __construct($args);
 
-    public function get_driver();
+    public function driver();
 
     public function &query(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass');
 
@@ -25,4 +25,6 @@ interface ddi
     public function last_query(): string;
 
     public function quote($value, $type = null);
+
+    public function table_exists(string $table): bool;
 }

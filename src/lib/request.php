@@ -7,21 +7,21 @@ namespace alexandria\lib;
  */
 class request
 {
-    protected $method;
-    protected $headers;
-    protected $data;
+    protected $_data;
+    protected $_method;
+    protected $_headers;
 
     public function __construct()
     {
         if (stripos(PHP_SAPI, 'CLI') !== false)
         {
-            $this->method = 'CLI';
-            $this->data   = $_SERVER['argv'];
+            $this->_method = 'CLI';
+            $this->_data   = $_SERVER['argv'];
         }
         else
         {
-            $this->method = strtoupper($_SERVER['REQUEST_METHOD']);
-            $this->data   = $this->method === 'GET' ? $_SERVER['QUERY_STRING'] : file_get_contents('php://input');
+            $this->_method = strtoupper($_SERVER['REQUEST_METHOD']);
+            $this->_data   = $this->_method === 'GET' ? $_SERVER['QUERY_STRING'] : file_get_contents('php://input');
         }
     }
 
@@ -30,7 +30,7 @@ class request
      */
     public function get_method(): string
     {
-        return $this->method;
+        return $this->_method;
     }
 
 
@@ -39,12 +39,12 @@ class request
      */
     public function get_headers(): array
     {
-        if (empty($this->headers))
+        if (empty($this->_headers))
         {
-            $this->headers = $this->parse_headers();
+            $this->_headers = $this->parse_headers();
         }
 
-        return $this->headers;
+        return $this->_headers;
     }
 
 
@@ -57,12 +57,12 @@ class request
      */
     public function get_header(string $name)
     {
-        if (empty($this->headers))
+        if (empty($this->_headers))
         {
-            $this->headers = $this->parse_headers();
+            $this->_headers = $this->parse_headers();
         }
 
-        return $this->headers[$name] ?? false;
+        return $this->_headers[$name] ?? false;
     }
 
 
@@ -71,7 +71,7 @@ class request
      */
     public function get_data(): string
     {
-        return $this->data;
+        return $this->_data;
     }
 
 
@@ -80,58 +80,58 @@ class request
      */
     public function get_json()
     {
-        return json_decode($this->data);
+        return json_decode($this->_data);
     }
 
 
     public function is_cli(): bool
     {
-        return $this->method === 'CLI';
+        return $this->_method === 'CLI';
     }
 
     public function is_http(): bool
     {
-        return $this->method !== 'CLI';
+        return $this->_method !== 'CLI';
     }
 
     public function is_options(): bool
     {
-        return $this->method === 'OPTIONS';
+        return $this->_method === 'OPTIONS';
     }
 
     public function is_get(): bool
     {
-        return $this->method === 'GET';
+        return $this->_method === 'GET';
     }
 
     public function is_head(): bool
     {
-        return $this->method === 'HEAD';
+        return $this->_method === 'HEAD';
     }
 
     public function is_post(): bool
     {
-        return $this->method === 'POST';
+        return $this->_method === 'POST';
     }
 
     public function is_put(): bool
     {
-        return $this->method === 'PUT';
+        return $this->_method === 'PUT';
     }
 
     public function is_delete(): bool
     {
-        return $this->method === 'DELETE';
+        return $this->_method === 'DELETE';
     }
 
     public function is_trace(): bool
     {
-        return $this->method === 'TRACE';
+        return $this->_method === 'TRACE';
     }
 
     public function is_connect(): bool
     {
-        return $this->method === 'CONNECT';
+        return $this->_method === 'CONNECT';
     }
 
     /**
@@ -144,9 +144,9 @@ class request
      */
     public function on(string $method, callable $callback)
     {
-        if (strtoupper($method) == $this->method)
+        if (strtoupper($method) == $this->_method)
         {
-            return $callback($this->data);
+            return $callback($this->_data);
         }
 
         return null;

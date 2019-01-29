@@ -159,8 +159,22 @@ class pdo implements ddi
     /**
      * @return $this
      */
-    public function get_driver()
+    public function driver()
     {
         return $this;
+    }
+
+    public function table_exists(string $table): bool
+    {
+        try
+        {
+            $this->query("SELECT 1 FROM {$table} LIMIT 1");
+        }
+        catch (\throwable $e)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

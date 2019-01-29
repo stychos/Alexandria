@@ -1,10 +1,9 @@
-<?php
+<?php /** @noinspection SqlWithoutWhere We generate queries here */
 
-namespace alexandria\cms;
+namespace alexandria\app;
 
-use alexandria\cms;
-use alexandria\lib\db;
 use alexandria\traits\properties;
+use alexandria\lib\db\ddi;
 
 /**
  * @property array properties
@@ -13,8 +12,9 @@ class model
 {
     use properties;
 
-    /** @var db\ddi $db */
+    /** @var ddi */
     protected $db;
+
     protected $table;
     protected $id_field         = 'id';
     protected $id_autoincrement = true;
@@ -23,15 +23,11 @@ class model
     protected static $_cache = [];
 
     /**
-     * model constructor.
-     *
-     * @param mixed|null $data
-     *
-     * @throws \ReflectionException
+     * @param array|object|null $data Fill created object with the passed data
      */
     public function __construct($data = null)
     {
-        $this->db = cms::module('db');
+        $this->db = kernel::load('db');
 
         $classname = str_replace('\\', '_', get_called_class());
         $classname = strtolower($classname);
@@ -103,8 +99,8 @@ class model
             }
 
             $qdata = implode(", ", $qdata);
-            $query = "UPDATE `{$this->table}` SET {$qdata} WHERE `{$this->id_field}` = :id";
-            $ret   = $this->db->query($query, $vars);
+            $sql   = "UPDATE `{$this->table}` SET {$qdata} WHERE `{$this->id_field}` = :id";
+            $ret   = $this->db->query($sql, $vars);
         }
 
         return $ret;
@@ -115,24 +111,106 @@ class model
      */
     public function delete(): bool
     {
-        $data = $this->data();
-        $ret  = $this->db->query("
-          DELETE FROM `{$this->table}`
-          WHERE `{$this->id_field}` = :id", [
+        $data  = $this->data();
+        $qdata = [
             ':id' => $data->{$this->id_field},
-        ]);
+        ];
+
+        $sql = "DELETE FROM `{$this->table}` WHERE `{$this->id_field}` = :id";
+        $ret = $this->db->query($sql, $qdata);
+        return $ret;
+    }
+
+
+    /**
+     * @return static[]
+     */
+    public static function all(): array
+    {
+        $static = new static;
+        $table  = $static->table;
+        $db     = $static->db;
+        unset($static);
+
+        $ret  = [];
+        $sql  = "SELECT * FROM `{$table}`";
+        $data = $db->query($sql);
+        foreach ($data as $item)
+        {
+            $ret [] = new static($item);
+        }
 
         return $ret;
     }
 
     /**
-     * @return string
-     * @throws \ReflectionException
+     * @param      $arg1
+     * @param null $arg2
+     *
+     * @return int|null
      */
-    public static function table(): string
+    public static function count($arg1, $arg2 = null): ?int
     {
+        $ret    = 0;
+        $fields = null;
+        $qdata  = null;
         $static = new static;
-        return $static->table;
+
+        // search by primary field, no params
+        if (is_scalar($arg1) && is_null($arg2))
+        {
+            $fields = [$static->id_field => $arg1];
+        }
+
+        // search by the field => value pair, params in the third argument
+        elseif (is_scalar($arg1) && is_scalar($arg2))
+        {
+            $fields = [$arg1 => $arg2];
+        }
+
+        // search by [ field => value ] array, params in the second argument
+        elseif (is_array($arg1) && !empty($arg1))
+        {
+            $fields = $arg1;
+        }
+
+        // invalid arguments
+        else
+        {
+            return $ret;
+        }
+
+        $where = [];
+        foreach ($fields as $field => $value)
+        {
+            preg_match('#^(?<operator>!=?|>=?|<=?|==?|\~|\^)?\s?(?<value>.+)#', $value, $matches);
+            $operator = $matches['operator'] ?? '=';
+            if (empty($operator))
+            {
+                $operator = '=';
+            }
+            elseif ($operator == '^')
+            {
+                $operator = 'LIKE';
+            }
+            elseif ($operator == '~')
+            {
+                $operator = 'RLIKE';
+            }
+            elseif ($operator == '!')
+            {
+                $operator = '!=';
+            }
+
+            $value              = $matches['value'] ?? $value;
+            $where[]            = "(`{$field}` {$operator} :{$field})";
+            $qdata[":{$field}"] = $value;
+        }
+        $where = 'WHERE ' . implode(' AND ', $where);
+
+        $sql = "SELECT COUNT(*) FROM `{$static->table}` {$where}";
+        $ret = $static->db->shot($sql, $qdata);
+        return $ret;
     }
 
     /**
@@ -158,18 +236,14 @@ class model
      * @param array        $arg3
      *
      * @return static[]
-     * @throws \ReflectionException
      */
     public static function find($arg1, $arg2 = null, array $arg3 = []): array
     {
-        $static = new static;
-        $table  = $static->table;
-        $db     = $static->db;
-        unset($static);
 
         $ret    = [];
         $fields = null;
         $qdata  = null;
+        $static = new static;
 
         // search by primary field, no params
         if (is_scalar($arg1) && is_null($arg2))
@@ -194,7 +268,7 @@ class model
         // invalid arguments
         else
         {
-            return [];
+            return $ret;
         }
 
         $where = [];
@@ -265,8 +339,8 @@ class model
             $limit = "LIMIT {$params['limit']}";
         }
 
-        $sql  = "SELECT * FROM `{$table}` {$where} {$order} {$limit}";
-        $data = $db->query($sql, $qdata);
+        $sql  = "SELECT * FROM `{$static->table}` {$where} {$order} {$limit}";
+        $data = $static->db->query($sql, $qdata);
         foreach ($data as $item)
         {
             $ret [] = new static($item);
@@ -280,7 +354,6 @@ class model
      * @param null $arg2
      *
      * @return static|false
-     * @throws \ReflectionException
      */
     public static function get($arg1, $arg2 = null): ?model
     {
@@ -334,7 +407,7 @@ class model
         $data = self::find($fields, $params);
         if (!empty($data[0]))
         {
-            self::$_cache [$cache_id] = $data[0];
+            self::$_cache[$cache_id] = $data[0];
             return $data[0];
         }
 
@@ -342,85 +415,11 @@ class model
     }
 
     /**
-     * @return static[]
-     * @throws \ReflectionException
+     * @return string
      */
-    public static function all(): array
+    public static function table(): string
     {
         $static = new static;
-        $table  = $static->table;
-        $db     = $static->db;
-        unset($static);
-
-        $ret  = [];
-        $sql  = "SELECT * FROM `{$table}`";
-        $data = $db->query($sql);
-        foreach ($data as $item)
-        {
-            $ret [] = new static($item);
-        }
-
-        return $ret;
-    }
-
-    /**
-     * @param      $arg1
-     * @param null $arg2
-     *
-     * @return int|null
-     * @throws \ReflectionException
-     */
-    public static function count($arg1, $arg2 = null): ?int
-    {
-        $static = new static;
-        $table  = $static->table;
-        $db     = $static->db;
-        unset($static);
-
-        $fields = null;
-        $qmasks = null;
-
-        // if field passed as scalar with value in the second argument and params in the third
-        if (is_scalar($arg1) && is_scalar($arg2))
-        {
-            $fields = [$arg1 => $arg2];
-        }
-
-        // filds-values passed as array and params in the second argument
-        elseif (is_array($arg1) && !empty($arg1))
-        {
-            $fields = $arg1;
-        }
-        else
-        {
-            return null;
-        }
-
-        foreach ($fields as $field => $value)
-        {
-            preg_match('#^(?<operator>!|>=?|<=?|=|\~|\^)?\s?(?<value>.+)#', $value, $matches);
-            $operator = $matches['operator'] ?? '=';
-            if (empty($operator))
-            {
-                $operator = '=';
-            }
-            elseif ($operator == '^')
-            {
-                $operator = 'LIKE';
-            }
-            elseif ($operator == '~')
-            {
-                $operator = 'RLIKE';
-            }
-
-            $value = $matches['value'] ?? $value;
-
-            $qmasks[":{$field}"] = $value;
-            $sql                 .= "`{$field}` {$operator} :{$field} AND ";
-        }
-        $sql = preg_replace('~ AND $~', ' ', $sql);
-
-        $ret = $db->shot($sql, $qmasks);
-        return $ret;
+        return $static->table;
     }
 }

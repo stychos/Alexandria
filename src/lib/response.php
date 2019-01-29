@@ -1,62 +1,96 @@
-<?php /** @noinspection PhpMethodMayBeStaticInspection */
+<?php
 
 namespace alexandria\lib;
 
 class response
 {
+    protected $_code;
+    protected $_code_msg;
+    protected $_buffer;
+    protected $_headers;
+
     public function __construct()
     {
+        $this->_code     = 200;
+        $this->_code_msg = null;
+        $this->_headers  = [];
+        $this->_buffer   = '';
+    }
+
+    /**
+     * @param string $text
+     *
+     * @return self
+     */
+    public function append(string $text): self
+    {
+        $this->_buffer .= $text;
+        return $this;
+    }
+
+    /**
+     * @param int         $code
+     * @param string|null $message
+     *
+     * @return self
+     */
+    public function code(int $code, string $message = null): self
+    {
+        $this->_code     = $code;
+        $this->_code_msg = $message;
+        return $this;
     }
 
     /**
      * @param string $header
      * @param string $value
      *
-     * @return bool
+     * @return self
      */
-    public function set_header(string $header, string $value)
+    public function header(string $header, string $value): self
     {
-        if (!headers_sent())
-        {
-            header("{$header}: {$value}", true);
-            return true;
-        }
-
-        return false;
+        $this->_headers[$header] = $value;
+        return $this;
     }
 
     /**
-     * @param string $message
+     * @param bool $send_headers
+     * @param bool $cli_transform
      *
      * @return string
      */
-    public function write(string $message): string
+    public function flush(bool $send_headers = true, bool $cli_transform = true): string
     {
-        if (stripos('CLI', PHP_SAPI) !== false)
+        if ($send_headers && !headers_sent())
         {
-            $message = preg_replace('~<br\s*/?>~', PHP_EOL, $message);
-            $message = strip_tags($message);
+            foreach ($this->_headers as $header => $value)
+            {
+                header("{$header}: {$value}", true);
+            }
         }
 
-        return $message;
+        $output = $this->_buffer;
+        if ($cli_transform && stripos(PHP_SAPI, 'CLI') !== false)
+        {
+            $output = preg_replace('~<br\s*/?>~', PHP_EOL, $output);
+            $output = strip_tags($output);
+        }
+
+        $this->_buffer = '';
+        return $output;
     }
 
     /**
      * @param mixed $object
-     * @param int $json_options
+     * @param int   $options
      *
      * @return string
-     * @throws \Exception
      */
-    public function write_json($object, int $json_options = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT): string
+    public function json($object, int $options = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT): string
     {
-        $out = json_encode($object, $json_options);
-        if ($out === false)
-        {
-            throw new \Exception("Can not encode output: ".json_last_error_msg());
-        }
+        $this->_buffer = json_encode($object, $options) . PHP_EOL;
+        $this->header('Content-Type', 'application/json');
 
-        $this->set_header('Content-Type', 'application/json');
-        return "{$out}\n";
+        return $this->flush();
     }
 }

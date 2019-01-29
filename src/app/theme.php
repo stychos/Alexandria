@@ -1,17 +1,11 @@
-<?php /** @noinspection PhpIncludeInspection */
+<?php /** @noinspection PhpIncludeInspection We use dynamic views includes here */
 
-/**
- * Alexandria Engine.
- * Theme class stub.
- */
+namespace alexandria\app;
 
-namespace alexandria\cms;
-
-use alexandria\cms;
 use alexandria\lib\form;
 
 /**
- * Theme CMS Library
+ * Theme app Library
  */
 class theme
 {
@@ -41,8 +35,9 @@ class theme
             $args = (object) $args;
         }
 
-        $proto = ((@$_SERVER['HTTPS'] && $_SERVER['HTTPS'] != 'off') || @$_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
-        $wroot = (@$_SERVER['HTTP_HOST']) ? $proto.'://'.rtrim($_SERVER['HTTP_HOST'], '/') : '';
+        $proto =
+            ((@$_SERVER['HTTPS'] && $_SERVER['HTTPS'] != 'off') || @$_SERVER['SERVER_PORT'] == 443) ? 'https' : 'http';
+        $wroot = (@$_SERVER['HTTP_HOST']) ? $proto . '://' . rtrim($_SERVER['HTTP_HOST'], '/') : '';
 
         $sub   = preg_replace("#(/index\.php)?{$_SERVER['PATH_INFO']}#", '', $_SERVER['PHP_SELF']);
         $wroot .= $sub;
@@ -89,8 +84,6 @@ class theme
      * @param string $content
      *
      * @return string
-     * @throws \ReflectionException
-     * @throws \Exception
      */
     public function render(string $content): string
     {
@@ -101,7 +94,7 @@ class theme
 
         if (strpos($buffer, '{content}') === false)
         {
-            throw new \Exception('Theme has no {content} section.');
+            trigger_error('Theme has no {content} section, theme rendering is insufficient', E_USER_NOTICE);
         }
 
         $buffer = str_replace('{content}', $content, $buffer);
@@ -151,19 +144,31 @@ class theme
         {
             foreach ($matches[0] as $name)
             {
-                $var = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
-                $var = str_replace('/', '\\', $var);
-
-                foreach ([$var, "{$var}\\controller"] as $controller)
+                $controller = preg_replace('/^\{\{(.+)\}\}$/', '\1', $name);
+                $controller = str_replace('/', '\\', $controller);
+                $controller .= '\\widget';
+                if (class_exists($controller) && method_exists($controller, 'main'))
                 {
-                    if (method_exists($controller, '__widget'))
+                    ob_start();
+                    $instance = new $controller;
+                    $tmp      = ob_get_clean();
+
+                    if (method_exists($instance, 'main'))
                     {
-                        $to     = $controller::__widget();
-                        $to     = str_replace('{theme}', $this->wtheme, $to);
-                        $to     = str_replace('{root}', $this->wroot, $to);
-                        $buffer = str_replace($name, $to, $buffer);
-                        break;
+                        $output = $instance->main();
                     }
+                    elseif (method_exists($instance, 'index'))
+                    {
+                        $output = $instance->index();
+                    }
+                    else
+                    {
+                        $output = $tmp;
+                    }
+
+                    $output = str_replace('{theme}', $this->wtheme, $output);
+                    $output = str_replace('{root}', $this->wroot, $output);
+                    $buffer = str_replace($name, $output, $buffer);
                 }
             }
         }
@@ -176,8 +181,9 @@ class theme
             foreach ($matches[0] as $name)
             {
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
-                $val    = cms::module('config')->$var;
-                $buffer = !empty($val) && is_scalar($val) ? str_replace($name, $val, $buffer) : str_replace($name, '', $buffer);
+                $val    = kernel::load('config')->$var;
+                $buffer = !empty($val) && is_scalar($val) ? str_replace($name, $val, $buffer) : str_replace($name, '',
+                    $buffer);
             }
         }
 

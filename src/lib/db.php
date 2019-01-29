@@ -10,7 +10,10 @@ namespace alexandria\lib;
  */
 class db
 {
-    public $stats;
+    public $stats = [
+        'queries' => 0,
+        'time'    => 0.0,
+    ];
 
     protected $driver;
 
@@ -34,7 +37,7 @@ class db
 
         try
         {
-            $reflect      = new \ReflectionClass(__NAMESPACE__.'\\db\\drivers\\'.$args['driver']);
+            $reflect      = new \ReflectionClass(__NAMESPACE__ . '\\db\\drivers\\' . $args['driver']);
             $this->driver = $reflect->newInstance($args);
         }
         catch (\Exception $e)
@@ -48,21 +51,22 @@ class db
     /**
      * @param $func
      * @param $args
+     *
      * @return mixed
      * @throws \ReflectionException
      */
     public function __call($func, $args)
     {
-        $stamp   = microtime(true);
+        $time    = microtime(true);
         $reflect = new \ReflectionMethod($this->driver, $func);
         $ret     = $reflect->invokeArgs($this->driver, $args);
 
-        $this->stats->time += microtime(true) - $stamp;
+        $this->stats->time += microtime(true) - $time;
         $this->stats->queries++;
         return $ret;
     }
 
-    public function get_driver()
+    public function driver()
     {
         return $this->driver;
     }
