@@ -62,7 +62,7 @@ class kernel
         return $this->response;
     }
 
-    public static function load(string $class, array $config = [])
+    public static function load(string $class, $config = null)
     {
         static $cache;
 
@@ -76,9 +76,9 @@ class kernel
 
             if (class_exists($classname))
             {
-                if (empty($config) && !empty($cache['config']))
+                if (empty($config) && $class !== 'config')
                 {
-                    $config = $cache['config']->{$class} ?? null;
+                    $config = self::load('config')->{$class} ?? null;
                 }
 
                 $instance = new $classname($config);
