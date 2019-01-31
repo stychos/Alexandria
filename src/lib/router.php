@@ -14,7 +14,6 @@ class router
 
     protected $search_controllers;
     protected $continue;
-    protected $active_route;
     protected $tail;
 
     public function __construct(array $args)
@@ -32,47 +31,43 @@ class router
         $this->rewrites    = $args['rewrites'] ?? [];
     }
 
-    public function route(string $route): ?string
+    /**
+     * @param string $route
+     *
+     * @return array returns [ 'success' => bool, 'output' => ?string ] array
+     * @todo establish router-controller relations for main() and index()
+     */
+    protected function _route(string $route): array
     {
-        $buff = null;
-        $original_route = $route;
+        $_route = $route;
+        $ret    = [
+            'success' => false,
+            'output'  => null,
+        ];
+
         foreach ($this->rewrites as $from => $to)
         {
-            $route = str_replace($from, $to, $route);
+            $_route = str_replace($from, $to, $_route);
         }
 
         foreach ($this->search_controllers as $class)
         {
-            $controller = str_replace('{$route}', $route, $class);
+            $controller = str_replace('{$route}', $_route, $class);
             $controller = str_replace('/', '\\', $controller);
             if (class_exists($controller))
             {
-                $this->active_route = $route;
-
-                $this->tail = str_replace($original_route, '', $this->autoroute_path);
+                $this->tail = str_replace($_route, '', $this->autoroute_path);
                 $this->tail = trim(rtrim($this->tail, '/'), '/');
 
                 ob_start();
-                $instance = new $controller();
-                $tmp = ob_get_clean();
-
-                if (method_exists($instance, 'main'))
-                {
-                    $buff .= $instance->main();
-                }
-                elseif(method_exists($instance, 'index'))
-                {
-                    $buff .= $instance->index();
-                }
-                else
-                {
-                    $buff .= $tmp;
-                }
+                new $controller();
+                $ret['output']  = ob_get_clean();
+                $ret['success'] = true;
                 break;
             }
         }
 
-        return $buff;
+        return $ret;
     }
 
     /**
@@ -80,76 +75,74 @@ class router
      *
      * @return string|null
      */
-    public function autoroute(bool $use_fallback = true): ?string
+    public function autoroute(bool $redirect = false): ?string
     {
-        // combined buffer
-        $buff = null;
+        $buff           = null; // combined output buffer
+        $this->continue = true; // run pre-routes first, so set this flag to true temporarily
 
-        // run pre-routes first
-        $this->continue = true;
-        $buff .= $this->preroute();
-
-        // some preroute controller told us to halt
-        if (!$this->continue)
+        if (!$redirect) // do prerouting only on independent calls
         {
-            return $buff;
+            $buff .= $this->preroute();
+            if (!$this->continue)
+            {
+                return $buff; // some preroute controller told us to halt
+            }
         }
 
-        // do not autocontinue after prerouting
-        $this->continue = false;
-
-        // main routing cycle, walking up by query path
-        $routed = null;
+        $routed         = false;
+        $this->continue = false; // prerouting finished, not disabling autocontinuation
         if (!empty($this->autoroute_path))
         {
             $path = explode('/', $this->autoroute_path);
-
             do
             {
                 $sub = implode('/', $path);
-                $routed = $this->route($sub);
-                if ($routed)
+                $res = $this->_route($sub);
+                if ($res['success'])
                 {
-                    $buff .= $routed;
+                    $routed = true;
+                    $buff   .= $res['output'];
 
-                    // check if called controller has set router to continue auto-routing
-                    if ($this->continue)
+                    if ($this->continue) // called controller had set us to continue autoroute cycle
                     {
                         $this->continue = false;
-                        continue;
                     }
-                    else
+                    else // controller doesn't stated anything, halt cycle after first matched controller call
                     {
                         break;
                     }
                 }
 
-                array_pop($path);
+                array_pop($path); // walk up to the root
             }
             while (!empty($path));
         }
 
-        if (!$use_fallback)
+        if ($redirect) // that was redirect cycle, return result
         {
             return $buff;
         }
 
-        // try default route if no automatic route was found and if path is empty
+        // no route was found and route string became empty, trying default route
         if (!$routed && empty($this->autoroute_path))
         {
-            $routed = $this->route($this->default_route);
+            $res    = $this->_route($this->default_route);
+            $routed = $res['success'];
+            $buff   .= $res['output'] ?? null;
         }
 
-        // try fail route if no automatic nor default routes are found
+        // no default route succeeded, trying fail route
         if (!$routed)
         {
-            $routed = $this->route($this->fail_route);
+            $res    = $this->_route($this->fail_route);
+            $routed = $res['success'];
+            $buff   .= $res['output'] ?? null;
         }
 
-        $buff .= $routed;
-        $buff .= $this->postroute(); // run post-routes after all
+        // do postrouting after all
+        $buff .= $this->postroute();
 
-        // if we still not routed, then it's a fatal
+        // no routes called, trigger error
         if (!$routed)
         {
             if (stripos('CLI', PHP_SAPI) === false)
@@ -163,36 +156,6 @@ class router
         return $buff;
     }
 
-    /**
-     * @param string   $to
-     * @param uri|null $uri
-     *
-     * @return string|null
-     */
-    public function reroute(string $to, uri $uri = null)
-    {
-        $this->autoroute_path = $to;
-        $buff                 = $this->autoroute($use_fallbacks = false);
-
-        if ($uri)
-        {
-            $new_uri = rtrim($to, '/') . '/' . $this->tail;
-            $uri->build($new_uri);
-        }
-
-        return $buff;
-    }
-
-    public function continue()
-    {
-        $this->continue = true;
-    }
-
-    public function stop()
-    {
-        $this->continue = false;
-    }
-
     protected function preroute(): ?string
     {
         $buff = null;
@@ -201,7 +164,8 @@ class router
         {
             if ($this->continue)
             {
-                $buff .= $this->route($route);
+                $res  = $this->_route($route);
+                $buff .= $res['output'] ?? null;
             }
         }
 
@@ -214,10 +178,41 @@ class router
 
         foreach ($this->post_routes as $route)
         {
-            $buff .= $this->route($route);
+            $res  = $this->_route($route);
+            $buff .= $res['output'] ?? null;
         }
 
         return $buff;
+    }
+
+    /**
+     * @param string   $to
+     * @param uri|null $uri
+     *
+     * @return string|null
+     */
+    public function redirect(string $to, uri $uri = null): ?string
+    {
+        $this->autoroute_path = $to;
+
+        if ($uri)
+        {
+            $rewrite = rtrim($to, '/').'/'.$this->tail;
+            $uri->build($rewrite);
+        }
+
+        $buff = $this->autoroute($use_fallbacks = false);
+        return $buff;
+    }
+
+    public function continue()
+    {
+        $this->continue = true;
+    }
+
+    public function stop()
+    {
+        $this->continue = false;
     }
 
     public function tail()

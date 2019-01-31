@@ -2,13 +2,29 @@
 
 namespace alexandria\app;
 
+use alexandria\lib\http;
+use alexandria\lib\request;
+use alexandria\lib\router;
+use alexandria\lib\uri;
+
 class controller
 {
+    /** @var uri */
     protected $uri;
+
+    /** @var http */
     protected $http;
+
+    /** @var request */
     protected $request;
+
+    /** @var router */
     protected $router;
+
+    /** @var config */
     protected $config;
+
+    /** @var theme */
     protected $theme;
 
     /**
@@ -46,17 +62,14 @@ class controller
         if (method_exists($this, $action))
         {
             echo $this->$action($arg);
-            $this->router->stop();
         }
         elseif (empty($action) && method_exists($this, 'index'))
         {
             echo $this->index();
-            $this->router->stop();
         }
         elseif (method_exists($this, 'main'))
         {
             echo $this->main($action);
-            $this->router->stop();
         }
     }
 
@@ -66,16 +79,6 @@ class controller
     protected function __bootstrap()
     {
 
-    }
-
-    /**
-     * Placeholder for the widgets
-     *
-     * @return string
-     */
-    public static function __widget()
-    {
-        return get_called_class();
     }
 
     /**
