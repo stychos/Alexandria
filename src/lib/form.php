@@ -119,9 +119,4 @@ class form
 
         return $__content;
     }
-
-    public static function show(string $file, array $vars = [])
-    {
-        echo self::load($file, $vars);
-    }
 }
