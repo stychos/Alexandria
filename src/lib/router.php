@@ -54,6 +54,8 @@ class router
         {
             $controller = str_replace('{$route}', $_route, $class);
             $controller = str_replace('/', '\\', $controller);
+            $controller = preg_replace('~\\+~', '\\', $controller);
+
             if (class_exists($controller))
             {
                 $this->tail = str_replace($_route, '', $this->autoroute_path);
