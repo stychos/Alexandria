@@ -43,8 +43,8 @@ class kernel
         }
 
         $this->config   = $this->load('config', $config);
-        $this->router   = $this->load('router');
         $this->uri      = $this->load('uri');
+        $this->router   = $this->load('router');
         $this->request  = $this->load('request');
         $this->response = $this->load('response');
         $this->theme    = $this->load('theme');
@@ -68,7 +68,7 @@ class kernel
 
         foreach (self::$_search as $prefix)
         {
-            $classname = $prefix . $class;
+            $classname = $prefix.$class;
             if (!empty($cache[$classname]))
             {
                 return $cache[$classname];

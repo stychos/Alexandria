@@ -20,7 +20,11 @@ class router
     {
         $this->search_controllers = $args['search_controllers'] ?? ['{$route}\\controller', '{$route}'];
 
-        $this->autoroute_path = $args['autoroute_path'] ?? $_SERVER['PATH_INFO'] ?? '';
+        $this->autoroute_path = $args['autoroute_path'] ?? $_SERVER['PATH_INFO'] ?? null;
+        if (is_null($this->autoroute_path) && isset($_SERVER['argv']))
+        {
+            $this->autoroute_path = implode('/', $_SERVER['argv']);
+        }
         $this->autoroute_path = urldecode($this->autoroute_path);
 
         $this->default_route = $args['default_route'] ?? 'index';
