@@ -70,7 +70,7 @@ class config
      *
      * @return bool
      */
-    public function __get($name)
+    public function &__get($name)
     {
         if (isset($this->_data[$name]->value))
         {
