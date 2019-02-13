@@ -37,17 +37,27 @@ class pdo implements ddi
      */
     public function &query(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
     {
+        $ret = false;
+
         $query = preg_replace("/[\\n\\t]/", ' ', $query);
         $query = preg_replace("/\s+/", ' ', $query);
         $query = trim(rtrim($query));
+
+        if (empty($query) || strpos($query, '#') === 0)
+        {
+            return $ret;
+        }
+        else
+        {
+            $this->query = $query;
+        }
 
         if (empty($mode))
         {
             $mode = self::result_object;
         }
 
-        $this->query = $query;
-        $stmt        = $this->pdo->prepare($query);
+        $stmt = $this->pdo->prepare($query);
         if (!$stmt)
         {
             Throw new \RuntimeException("Error preparing statement: {$stmt->errorInfo()[0]}, {$stmt->errorInfo()[1]}. {$stmt->errorInfo()[2]}.");
@@ -85,6 +95,31 @@ class pdo implements ddi
             default:
                 $ret = $stmt->fetchAll(\PDO::FETCH_CLASS, $cast);
             break;
+        }
+
+        return $ret;
+    }
+
+    /**
+     * @param string $query
+     * @param array  $args
+     * @param int    $mode
+     * @param string $cast
+     * @return array
+     */
+    public function multi(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass')
+    {
+        $ret     = [];
+        $queries = explode(';', $query);
+        foreach ($queries as $query)
+        {
+            $query = trim(rtrim($query));
+            if (empty($query) || strpos($query, '#') === 0)
+            {
+                continue;
+            }
+
+            $ret[$query] = $this->query($query, $args, $mode, $cast);
         }
 
         return $ret;

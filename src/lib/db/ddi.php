@@ -16,6 +16,8 @@ interface ddi
 
     public function &query(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass');
 
+    public function multi(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass');
+
     public function first(string $query, array $args = [], int $mode = self::result_object, string $cast = '\\stdClass');
 
     public function shot(string $query, array $args = []);
