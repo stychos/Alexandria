@@ -65,10 +65,19 @@ class router
                 $this->tail = str_replace($_route, '', $this->autoroute_path);
                 $this->tail = trim(rtrim($this->tail, '/'), '/');
 
-                ob_start();
-                new $controller();
-                $ret['output']  = ob_get_clean();
-                $ret['success'] = true;
+                if (stripos(PHP_SAPI, 'cli') !== false)
+                {
+                    new $controller;
+                    $ret['success'] = true;
+                }
+                else
+                {
+                    ob_start();
+                    new $controller();
+                    $ret['output']  = ob_get_clean();
+                    $ret['success'] = true;
+                }
+
                 break;
             }
         }
