@@ -39,11 +39,11 @@ class pdo implements ddi
     {
         $ret = false;
 
-        $query = preg_replace("/[\\n\\t]/", ' ', $query);
-        $query = preg_replace("/\s+/", ' ', $query);
+        $query = preg_replace("/ +/", ' ', $query);
+        $query = str_replace("\t", ' ', $query);
         $query = trim(rtrim($query));
 
-        if (empty($query) || strpos($query, '#') === 0)
+        if (empty($query))
         {
             return $ret;
         }
@@ -114,7 +114,7 @@ class pdo implements ddi
         foreach ($queries as $query)
         {
             $query = trim(rtrim($query));
-            if (empty($query) || strpos($query, '#') === 0)
+            if (empty($query))
             {
                 continue;
             }
