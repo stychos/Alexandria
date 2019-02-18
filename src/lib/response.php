@@ -11,6 +11,11 @@ class response
 
     public function __construct()
     {
+        $this->clear();
+    }
+
+    public function clear()
+    {
         $this->_code     = 200;
         $this->_code_msg = null;
         $this->_headers  = [];
@@ -22,7 +27,7 @@ class response
      *
      * @return self
      */
-    public function append(string $text): self
+    public function append(string $text = null): self
     {
         $this->_buffer .= $text;
         return $this;
