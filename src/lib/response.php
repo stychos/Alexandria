@@ -33,6 +33,12 @@ class response
         return $this;
     }
 
+    public function reset(string $text): self
+    {
+        $this->_buffer = $text;
+        return $this;
+    }
+
     /**
      * @param int         $code
      * @param string|null $message
