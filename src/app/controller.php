@@ -94,6 +94,10 @@ abstract class controller
      */
     protected function ajax($data, int $code = 200, int $format = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
     {
+        if (is_scalar($data)) {
+            $data = [ 'msg' => $data ];
+        }
+
         $data['success'] = empty($data['error']);
         $this->response->code($code);
         $buffer = $this->response->json($data, $format);
