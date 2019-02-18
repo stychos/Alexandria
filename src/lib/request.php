@@ -53,16 +53,16 @@ class request
      *
      * @param   string $name Header name to retreive
      *
-     * @return  string|false        Returns header value or false.
+     * @return  string|null        Returns header value or false.
      */
-    public function header(string $name)
+    public function header(string $name): ?string
     {
         if (empty($this->_headers))
         {
             $this->_headers = $this->_parse_headers();
         }
 
-        return $this->_headers[$name] ?? false;
+        return $this->_headers[$name] ?? null;
     }
 
 
