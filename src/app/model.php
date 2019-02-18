@@ -434,4 +434,9 @@ abstract class model
     {
         return $this->_properties;
     }
+
+    public function __toString()
+    {
+        return json_encode($this->__debugInfo());
+    }
 }
