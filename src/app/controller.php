@@ -4,10 +4,11 @@ namespace alexandria\app;
 
 use alexandria\lib\http;
 use alexandria\lib\request;
+use alexandria\lib\response;
 use alexandria\lib\router;
 use alexandria\lib\uri;
 
-class controller
+abstract class controller
 {
     /** @var uri */
     protected $uri;
@@ -17,6 +18,9 @@ class controller
 
     /** @var request */
     protected $request;
+
+    /** @var response */
+    protected $response;
 
     /** @var router */
     protected $router;
@@ -34,12 +38,13 @@ class controller
      */
     public function __construct()
     {
-        $this->uri     = $this->load('uri');
-        $this->http    = $this->load('http');
-        $this->request = $this->load('request');
-        $this->router  = $this->load('router');
-        $this->config  = $this->load('config');
-        $this->theme   = $this->load('theme');
+        $this->uri      = $this->load('uri');
+        $this->http     = $this->load('http');
+        $this->request  = $this->load('request');
+        $this->response = $this->load('response');
+        $this->router   = $this->load('router');
+        $this->config   = $this->load('config');
+        $this->theme    = $this->load('theme');
         $this->__bootstrap();
 
         $class = explode("\\", get_called_class());
@@ -61,15 +66,15 @@ class controller
         $arg    = $this->uri->assoc($action);
         if (method_exists($this, $action))
         {
-            echo $this->$action($arg);
+            $this->response->append($this->$action($arg));
         }
         elseif (empty($action) && method_exists($this, 'index'))
         {
-            echo $this->index();
+            $this->response->append($this->index());
         }
         elseif (method_exists($this, 'main'))
         {
-            echo $this->main($action);
+            $this->response->append($this->main($action));
         }
     }
 
@@ -87,17 +92,18 @@ class controller
      * @param     $data
      * @param int $format JSON formatiing options
      */
-    protected function ajax($data, int $format = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+    protected function ajax($data, int $code = 200, int $format = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)
     {
         $data['success'] = empty($data['error']);
-        echo json_encode($data, $format);
-        die();
+        $this->response->code($code);
+        $buffer = $this->response->json($data, $format);
+        die($buffer);
     }
 
     /**
      * Loads framework/application module and returns its instance
      *
-     * @param string     $module
+     * @param string $module
      * @return mixed
      */
     protected function load(string $module)
