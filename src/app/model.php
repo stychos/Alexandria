@@ -8,7 +8,7 @@ use alexandria\lib\db\ddi;
 /**
  * @property array properties
  */
-class model
+abstract class model
 {
     use properties;
 
@@ -428,5 +428,10 @@ class model
     {
         $static = new static;
         return $static->table;
+    }
+
+    public function __debugInfo()
+    {
+        return $this->_properties;
     }
 }
