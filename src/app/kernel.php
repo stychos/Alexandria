@@ -52,13 +52,15 @@ class kernel
 
     public function run(): lib\response
     {
-        $buffer = $this->router->autoroute();
+        $this->router->autoroute();
         if ($this->request->is_http())
         {
+            $buffer = $this->response->flush();
             $buffer = $this->theme->render($buffer);
+            $this->response->clear();
+            $this->response->append($buffer);
         }
 
-        $this->response->append($buffer);
         return $this->response;
     }
 
