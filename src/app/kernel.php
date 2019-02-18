@@ -57,8 +57,7 @@ class kernel
         {
             $buffer = $this->response->flush();
             $buffer = $this->theme->render($buffer);
-            $this->response->clear();
-            $this->response->append($buffer);
+            $this->response->reset($buffer);
         }
 
         return $this->response;
