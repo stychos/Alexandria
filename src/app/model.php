@@ -251,6 +251,13 @@ class model
             $fields = [$static->id_field => $arg1];
         }
 
+        // search by primary field, params in the second argument
+        elseif (is_scalar($arg1) && is_array($arg2))
+        {
+            $fields = [$static->id_field => $arg1];
+            $params = $arg2;
+        }
+
         // search by the field => value pair, params in the third argument
         elseif (is_scalar($arg1) && is_scalar($arg2))
         {
@@ -304,14 +311,14 @@ class model
         {
             if (is_scalar($params['order']))
             {
-                preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $order, $matches);
+                preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)?$~i', $params['order'], $matches);
                 $direction = $matches['direction'] ?? 'ASC';
                 $direction = strtoupper($direction);
 
                 $field = $matches['field'] ?? null;
                 if ($field)
                 {
-                    $order = "ORDER BY `{$field}` {$direction}, ";
+                    $order = "ORDER BY `{$field}` {$direction}";
                 }
             }
             elseif (is_iterable($params['order']))
@@ -319,7 +326,7 @@ class model
                 $order = [];
                 foreach ($params['order'] as $_)
                 {
-                    preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)$~i', $_, $matches);
+                    preg_match('~^\s*(?<field>\w+)\s*(?<direction>asc|desc)?$~i', $_, $matches);
                     $direction = $matches['direction'] ?? 'ASC';
                     $direction = strtoupper($direction);
 
