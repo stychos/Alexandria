@@ -28,7 +28,7 @@ class request
     /**
      * Return used method for the current request.
      */
-    public function get_method(): string
+    public function method(): string
     {
         return $this->_method;
     }
@@ -37,11 +37,11 @@ class request
     /**
      * Return received headers for the current request.
      */
-    public function get_headers(): array
+    public function headers(): array
     {
         if (empty($this->_headers))
         {
-            $this->_headers = $this->parse_headers();
+            $this->_headers = $this->_parse_headers();
         }
 
         return $this->_headers;
@@ -55,11 +55,11 @@ class request
      *
      * @return  string|false        Returns header value or false.
      */
-    public function get_header(string $name)
+    public function header(string $name)
     {
         if (empty($this->_headers))
         {
-            $this->_headers = $this->parse_headers();
+            $this->_headers = $this->_parse_headers();
         }
 
         return $this->_headers[$name] ?? false;
@@ -69,7 +69,7 @@ class request
     /**
      * Return received data for the current request.
      */
-    public function get_data(): string
+    public function data(): string
     {
         return $this->_data;
     }
@@ -78,7 +78,7 @@ class request
     /**
      * Return received data as JSON decoded object.
      */
-    public function get_json()
+    public function json()
     {
         return json_decode($this->_data);
     }
@@ -158,7 +158,7 @@ class request
      *
      * @return array [string] The HTTP header key/value pairs.
      */
-    protected function parse_headers()
+    protected function _parse_headers()
     {
         $headers     = [];
         $copy_server = [
