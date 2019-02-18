@@ -38,17 +38,11 @@ class router
     /**
      * @param string $route
      *
-     * @return array returns [ 'success' => bool, 'output' => ?string ] array
-     * @todo establish router-controller relations for main() and index()
+     * @return bool
      */
-    protected function _route(string $route): array
+    protected function _route(string $route): bool
     {
         $_route = $route;
-        $ret    = [
-            'success' => false,
-            'output'  => null,
-        ];
-
         foreach ($this->rewrites as $from => $to)
         {
             $_route = str_replace($from, $to, $_route);
@@ -65,42 +59,27 @@ class router
                 $this->tail = str_replace($_route, '', $this->autoroute_path);
                 $this->tail = trim(rtrim($this->tail, '/'), '/');
 
-                if (stripos(PHP_SAPI, 'cli') !== false)
-                {
-                    new $controller;
-                    $ret['success'] = true;
-                }
-                else
-                {
-                    ob_start();
-                    new $controller();
-                    $ret['output']  = ob_get_clean();
-                    $ret['success'] = true;
-                }
-
-                break;
+                new $controller();
+                return true;
             }
         }
 
-        return $ret;
+        return false;
     }
 
     /**
      * @param bool $use_fallback
-     *
-     * @return string|null
      */
-    public function autoroute(bool $redirect = false): ?string
+    public function autoroute(bool $redirect = false)
     {
-        $buff           = null; // combined output buffer
-        $this->continue = true; // run pre-routes first, so set this flag to true temporarily
-
         if (!$redirect) // do prerouting only on independent calls
         {
-            $buff .= $this->preroute();
+            $this->continue = true;
+            $this->preroute();
+
             if (!$this->continue)
             {
-                return $buff; // some preroute controller told us to halt
+                return; // some preroute controller told us to halt
             }
         }
 
@@ -112,15 +91,12 @@ class router
             do
             {
                 $sub = implode('/', $path);
-                $res = $this->_route($sub);
-                if ($res['success'])
+                if ($this->_route($sub))
                 {
                     $routed = true;
-                    $buff   .= $res['output'];
-
                     if ($this->continue) // called controller had set us to continue autoroute cycle
                     {
-                        $this->continue = false;
+                        $this->continue = false; // reset it for the next controller in cycle
                     }
                     else // controller doesn't stated anything, halt cycle after first matched controller call
                     {
@@ -135,27 +111,24 @@ class router
 
         if ($redirect) // that was redirect cycle, return result
         {
-            return $buff;
+            return;
         }
 
         // no route was found and route string became empty, trying default route
         if (!$routed && empty($this->autoroute_path))
         {
-            $res    = $this->_route($this->default_route);
-            $routed = $res['success'];
-            $buff   .= $res['output'] ?? null;
+            $routed = $this->_route($this->default_route);
         }
 
         // no default route succeeded, trying fail route
         if (!$routed)
         {
-            $res    = $this->_route($this->fail_route);
-            $routed = $res['success'];
-            $buff   .= $res['output'] ?? null;
+            $routed = $this->_route($this->fail_route);
         }
 
         // do postrouting after all
-        $buff .= $this->postroute();
+        $this->continue = true;
+        $this->postroute();
 
         // no routes called, trigger error
         if (!$routed)
@@ -165,39 +138,31 @@ class router
                 http_response_code(404);
             }
 
-            trigger_error("Route class for {$this->autoroute_path} not found. Default and fail routes are not found too. Check your configuration.", E_USER_WARNING);
+            trigger_error("Route class for {$this->autoroute_path} not found. Default and fail routes are not found too. Check your configuration.",
+                E_USER_WARNING);
         }
-
-        return $buff;
     }
 
-    protected function preroute(): ?string
+    protected function preroute()
     {
-        $buff = null;
-
         foreach ($this->pre_routes as $route)
         {
             if ($this->continue)
             {
-                $res  = $this->_route($route);
-                $buff .= $res['output'] ?? null;
+                $this->_route($route);
             }
         }
-
-        return $buff;
     }
 
-    protected function postroute(): ?string
+    protected function postroute()
     {
-        $buff = null;
-
         foreach ($this->post_routes as $route)
         {
-            $res  = $this->_route($route);
-            $buff .= $res['output'] ?? null;
+            if ($this->continue)
+            {
+                $this->_route($route);
+            }
         }
-
-        return $buff;
     }
 
     /**
