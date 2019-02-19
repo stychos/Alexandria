@@ -74,6 +74,8 @@ class response
     {
         if ($send_headers && !headers_sent())
         {
+            http_response_code($this->_code);
+
             foreach ($this->_headers as $header => $value)
             {
                 header("{$header}: {$value}", true);
@@ -99,9 +101,8 @@ class response
      */
     public function json($object, int $options = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT): string
     {
-        $this->_buffer = json_encode($object, $options) . PHP_EOL;
+        $this->reset(json_encode($object, $options));
         $this->header('Content-Type', 'application/json');
-
         return $this->flush();
     }
 }
