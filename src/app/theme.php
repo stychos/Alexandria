@@ -224,6 +224,7 @@ class theme
      */
     public function view(string $form, array $vars = []): string
     {
+        $vars['theme'] = $this;
         foreach ($this->vars as $name => $var)
         {
             if (!isset($vars[$name]))
