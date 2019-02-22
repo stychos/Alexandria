@@ -47,8 +47,7 @@ trait properties
         foreach (preg_split('~\s+~', $config) as $_)
         {
             $chunk = strtolower($_);
-            if (
-            in_array($chunk, [
+            if (in_array($chunk, [
                 'bool',
                 'boolean',
                 'int',
@@ -58,18 +57,15 @@ trait properties
                 'string',
                 'array',
                 'object',
-            ])
-            )
+            ]))
             {
                 $type = $chunk;
             }
-            elseif (
-            in_array($chunk, [
+            elseif (in_array($chunk, [
                 'readonly',
                 'readwrite',
                 'writeonly',
-            ])
-            )
+            ]))
             {
                 $access = $chunk;
             }
@@ -255,6 +251,7 @@ trait properties
      */
     public function &__get($name)
     {
+        $ret   = null;
         $class = __CLASS__;
 
         // called property not in configured list
@@ -268,12 +265,12 @@ trait properties
                 if ($name === $_->getName())
                 {
                     trigger_error("Cannot access protected property: {$class}::{$name}", E_USER_ERROR);
-                    return null;
+                    return $ret;
                 }
             }
 
             trigger_error("Undefined property: {$class}::{$name}", E_USER_NOTICE);
-            return null;
+            return $ret;
         }
 
         // property is configured, check for the writeonly flag
@@ -281,7 +278,7 @@ trait properties
         if ($cfg->access == 'writeonly')
         {
             trigger_error("Cannot access writeonly property: {$class}::{$name}", E_USER_ERROR);
-            return null;
+            return $ret;
         }
 
         // cast to configured type
@@ -385,8 +382,8 @@ trait properties
      * @param  int $json_flags Encode serializable properties with these JSON flags
      * @return \stdClass
      */
-    public function data(int $json_flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT): \stdClass
-    {
+    public function data(int $json_flags = JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT
+    ): \stdClass {
         $ret = new \stdClass();
         foreach ($this->properties as $name => $_)
         {
