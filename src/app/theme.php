@@ -253,7 +253,11 @@ class theme
             $filename = "{$dir}/{$form}.php";
             if (file_exists($filename))
             {
-                return form::load($filename, $vars);
+                $output = form::load($filename, $vars);
+                $output = str_replace('{theme}', $this->wtheme, $output);
+                $output = str_replace('{root}', $this->wroot, $output);
+
+                return $output;
             }
         }
 
