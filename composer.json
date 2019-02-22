@@ -12,6 +12,7 @@
   "require": {
     "php": ">= 7.1"
   },
+  "minimum-stability": "dev",
   "autoload": {
     "psr-4": {
       "alexandria\\": "src/"
