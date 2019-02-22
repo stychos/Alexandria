@@ -16,7 +16,7 @@ abstract class model
     protected $db;
 
     protected $table;
-    protected $id_field         = 'id';
+    protected $id_field = 'id';
     protected $id_autoincrement = true;
     protected $_cache_id;
 
@@ -31,7 +31,7 @@ abstract class model
 
         $classname = str_replace('\\', '_', get_called_class());
         $classname = strtolower($classname);
-        $classname = preg_replace('~(\w+)_\1$~', '\1', $classname) . 's';
+        $classname = preg_replace('~(\w+)_\1$~', '\1', $classname).'s';
 
         $this->_cache_id = $classname;
         if (empty($this->table))
@@ -127,7 +127,7 @@ abstract class model
      */
     public static function all(): array
     {
-        $static = new static;
+        $static = new static();
         $table  = $static->table;
         $db     = $static->db;
         unset($static);
@@ -154,7 +154,7 @@ abstract class model
         $ret    = 0;
         $fields = null;
         $qdata  = null;
-        $static = new static;
+        $static = new static();
 
         // search by primary field, no params
         if (is_scalar($arg1) && is_null($arg2))
@@ -206,7 +206,7 @@ abstract class model
             $where[]            = "(`{$field}` {$operator} :{$field})";
             $qdata[":{$field}"] = $value;
         }
-        $where = 'WHERE ' . implode(' AND ', $where);
+        $where = 'WHERE '.implode(' AND ', $where);
 
         $sql = "SELECT COUNT(*) FROM `{$static->table}` {$where}";
         $ret = $static->db->shot($sql, $qdata);
@@ -243,7 +243,7 @@ abstract class model
         $ret    = [];
         $fields = null;
         $qdata  = null;
-        $static = new static;
+        $static = new static();
 
         // search by primary field, no params
         if (is_scalar($arg1) && is_null($arg2))
@@ -281,7 +281,7 @@ abstract class model
         $where = [];
         foreach ($fields as $field => $value)
         {
-            preg_match('#^(?<operator>!=?|>=?|<=?|==?|\~|\^)?\s?(?<value>.+)#', $value, $matches);
+            preg_match('#^(?<operator>\#|!=?|>=?|<=?|==?|\~|\^)?\s?(?<value>.+)#', $value, $matches);
             $operator = $matches['operator'] ?? '=';
             if (empty($operator))
             {
@@ -299,12 +299,35 @@ abstract class model
             {
                 $operator = '!=';
             }
+            elseif ($operator == '#')
+            {
+                $operator = 'IN';
+                $invmask  = [];
+                $invals   = explode(',', $matches['value']);
+                $invid    = uniqid();
+                foreach ($invals as $inval)
+                {
+                    $inval = trim(rtrim($inval));
+                    if (empty($inval))
+                    {
+                        continue;
+                    }
 
-            $value              = $matches['value'] ?? $value;
-            $where[]            = "(`{$field}` {$operator} :{$field})";
+                    $invmask [] = ":{$field}_{$inval}";
+
+                    $qdata[":{$field}_{$inval}"] = $inval;
+                }
+
+                $where[] = "`{$field}` IN (".implode(',', $invmask).")";
+                continue;
+            }
+
+            $value   = $matches['value'] ?? $value;
+            $where[] = "(`{$field}` {$operator} :{$field})";
+            
             $qdata[":{$field}"] = $value;
         }
-        $where = 'WHERE ' . implode(' AND ', $where);
+        $where = 'WHERE '.implode(' AND ', $where);
 
         $order = '';
         if (!empty($params['order']))
@@ -336,7 +359,7 @@ abstract class model
                         $order[] = "`{$field}` {$direction}";
                     }
                 }
-                $order = 'ORDER BY' . implode(', ', $order);
+                $order = 'ORDER BY'.implode(', ', $order);
             }
         }
 
@@ -366,7 +389,7 @@ abstract class model
     {
         $fields = null;
         $params = ['limit' => 1];
-        $static = new static;
+        $static = new static();
 
         // search by primary field, no params
         if (is_scalar($arg1) && is_null($arg2))
@@ -426,7 +449,7 @@ abstract class model
      */
     public static function table(): string
     {
-        $static = new static;
+        $static = new static();
         return $static->table;
     }
 
