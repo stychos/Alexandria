@@ -36,8 +36,7 @@ class theme
         }
 
         $proto = 'http';
-        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off'
-        || !empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off' || !empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
         {
             $proto = 'https';
         }
@@ -197,8 +196,8 @@ class theme
             {
                 $var    = preg_replace('/^\{\[(.+)\]\}$/', '\1', $name);
                 $val    = kernel::load('config')->$var;
-                $buffer = !empty($val) && is_scalar($val) ? str_replace($name, $val, $buffer) : str_replace($name, '',
-                    $buffer);
+                $buffer = !empty($val) && is_scalar($val) ? str_replace($name, $val, $buffer) :
+                    str_replace($name, '', $buffer);
             }
         }
 
@@ -243,12 +242,10 @@ class theme
             }
         }
 
-        foreach (
-            [
-                "{$this->theme}/forms",
-                "{$this->root}/forms",
-            ] as $dir
-        )
+        foreach ([
+            "{$this->theme}/forms",
+            "{$this->root}/forms",
+        ] as $dir)
         {
             $filename = "{$dir}/{$form}.php";
             if (file_exists($filename))
