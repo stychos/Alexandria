@@ -12,12 +12,16 @@ class str
      *
      * @return string [type]                   [description]
      */
-    public static function numstr(int $number, string $noun)
+    public static function numstr(int $number, string $noun, string $multi = null)
     {
-        $ret = "{$number} {$noun}";
+        $postfix = $multi ? $multi : $noun.'s';
         if ($number % 10 != 1)
         {
-            $ret .= 's';
+            $ret = "{$number} {$postfix}";
+        }
+        else
+        {
+            $ret = "{$number} {$noun}";
         }
 
         return $ret;
