@@ -15,7 +15,7 @@ class str
     public static function numstr(int $number, string $noun, string $multi = null)
     {
         $postfix = $multi ? $multi : $noun.'s';
-        if ($number % 10 != 1)
+        if ($number % 10 != 1 && $number != 11)
         {
             $ret = "{$number} {$postfix}";
         }
